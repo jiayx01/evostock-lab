@@ -1,0 +1,20 @@
+{
+  "target_account": "investor@example.com",
+  "broker": "your-broker",
+  "profile_status": "PENDING_AUTHORIZATION",
+  "confirmed_senders": [],
+  "excluded_senders": [],
+  "confirmed_subject_patterns": [],
+  "confirmed_execution_terms": [],
+  "confirmed_non_position_terms": [],
+  "confirmed_timezone": "PENDING",
+  "bootstrap_mode": "FULL_HISTORY",
+  "bootstrap_completed_at": null,
+  "bootstrap_oldest_message_at": null,
+  "bootstrap_event_count": 0,
+  "anchor_at": null,
+  "anchor_evidence_message_ids": [],
+  "ticker_aliases": {},
+  "parser_version": "1.0.0",
+  "notes": "Confirm mailbox identity, sender, subject, status terms, timezone, and history coverage before changing profile_status to CONFIRMED."
+}

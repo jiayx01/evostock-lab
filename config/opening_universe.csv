@@ -1,0 +1,18 @@
+ticker,company_name,theme,notes
+MSFT,Microsoft,AI software / cloud,large-cap quality candidate
+NVDA,NVIDIA,AI accelerators,high-volatility AI leader
+AVGO,Broadcom,AI networking / custom silicon,semiconductor infrastructure
+AMZN,Amazon,cloud / consumer,AWS and retail platform
+GOOGL,Alphabet,search / cloud / AI,large-cap AI and ads
+META,Meta Platforms,AI advertising,large-cap advertising platform
+TSM,Taiwan Semiconductor,advanced foundry,semiconductor supply chain
+ASML,ASML,semiconductor equipment,advanced lithography
+AMD,Advanced Micro Devices,AI accelerators,AI challenger
+ANET,Arista Networks,AI networking,data-center networking
+PANW,Palo Alto Networks,cybersecurity,security platform
+CRWD,CrowdStrike,cybersecurity,endpoint/cloud security
+NOW,ServiceNow,enterprise software,workflow automation
+PLTR,Palantir,AI software,high-expectation AI software
+ARM,Arm Holdings,compute IP,high-expectation compute IP
+JPM,JPMorgan Chase,banking,large-cap bank diversification candidate
+V,Visa,payments,global payments network candidate

@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "run_id": "run-YYYYMMDD-HHMM-slot",
+  "batch_id": "gmail-history-before-after",
+  "target_account": "investor@example.com",
+  "expected_parent_transaction_id": "read-from-holdings-commit-manifest",
+  "scan": {
+    "started_at": "YYYY-MM-DDTHH:MM:SS+00:00",
+    "completed_at": "YYYY-MM-DDTHH:MM:SS+00:00",
+    "window_start": "YYYY-MM-DDTHH:MM:SS+00:00",
+    "pagination_complete": true,
+    "pages_fetched": 1,
+    "terminal_next_page_token": null,
+    "history_id_before": "read-from-broker-sync-state",
+    "history_id_after": "verified-gmail-history-id"
+  },
+  "messages": [
+    {
+      "source_message_id": "gmail-message-id",
+      "source_thread_id": "gmail-thread-id",
+      "message_received_at": "YYYY-MM-DDTHH:MM:SS+00:00",
+      "sender": "trades@broker.example",
+      "subject": "verified-subject",
+      "content_hash": "sha256-of-message-content",
+      "parser_version": "1.1.0",
+      "lifecycle_type": "ORDER_SUBMITTED",
+      "processing_status": "IGNORED_NON_POSITION",
+      "discovered_at": "YYYY-MM-DDTHH:MM:SS+00:00",
+      "processed_at": "YYYY-MM-DDTHH:MM:SS+00:00",
+      "events": [],
+      "quarantine": null,
+      "notes": ""
+    }
+  ]
+}

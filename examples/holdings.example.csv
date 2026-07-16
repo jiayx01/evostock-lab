@@ -1,0 +1,2 @@
+date,ticker,company_name,position_type,shares,avg_cost,last_price,market_value,portfolio_weight_pct,entry_date,entry_reason,core_thesis,expected_holding_period,target_allocation_pct,max_allocation_pct,stop_loss_pct,trim_profit_pct,add_rule,trim_rule,thesis_break_rule,next_earnings_date,key_risks,latest_action,notes
+2026-01-02,MSFT,Microsoft,stock,1,400,,,,2026-01-02,Demo input for local analysis,Cloud and software research thesis,3-12m,,,,,,,,,Competition and valuation,,Synthetic example only

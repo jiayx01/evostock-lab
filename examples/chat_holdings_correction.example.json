@@ -1,0 +1,17 @@
+{
+  "correction_id": "chat-YYYYMMDD-HHMM",
+  "corrected_at": "YYYY-MM-DDTHH:MM:SS+08:00",
+  "source": "user_chat",
+  "expected_previous_correction_id": "",
+  "holdings": [
+    {
+      "ticker": "TICKER",
+      "company_name": "",
+      "shares": "",
+      "avg_cost": "",
+      "entry_date": "",
+      "core_thesis": "",
+      "notes": ""
+    }
+  ]
+}
