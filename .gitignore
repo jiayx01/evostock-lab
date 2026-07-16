@@ -48,3 +48,6 @@ watchlist_current.csv
 *.tiff
 *.webp
 *.pdf
+
+# Curated documentation artwork is safe to publish.
+!assets/*.png
