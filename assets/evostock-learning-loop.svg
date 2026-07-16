@@ -1,184 +1,341 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="720" viewBox="0 0 1600 720" role="img" aria-labelledby="title desc">
-  <title id="title">EvoStock Lab 自进化股票研究闭环</title>
-  <desc id="desc">从事实快照、候选筛选、条件式建议、结果结算、无未来复盘到规则验证。通过门槛的规则进入下一轮，未通过的规则保留为候选经验。</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1120" viewBox="0 0 1920 1120" role="img" aria-labelledby="title desc">
+  <title id="title">EvoStock Lab 自进化股票研究流程图</title>
+  <desc id="desc">三层流程图。事实层校验聊天持仓、券商成交、市场与公司事实；决策层维护候选池、执行五角色审阅与主代理仲裁；学习层按固定窗口计算结果，经过日周月复盘与严格验证后才晋级规则。</desc>
   <defs>
     <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
-      <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#DCE3EC" stroke-width="1" opacity="0.34"/>
+      <path d="M32 0H0V32" fill="none" stroke="#DCE3EC" stroke-width="1" opacity="0.32"/>
     </pattern>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
-      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#18212F" flood-opacity="0.08"/>
+      <feDropShadow dx="0" dy="7" stdDeviation="10" flood-color="#152033" flood-opacity="0.07"/>
     </filter>
-    <marker id="arrow-neutral" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#98A5B5"/>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5 0 10Z" fill="#8F9CAD"/>
     </marker>
-    <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#11866F"/>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5 0 10Z" fill="#2D6CDF"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5 0 10Z" fill="#10866E"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5 0 10Z" fill="#C45C66"/>
     </marker>
     <style>
       .sans { font-family: "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", Arial, sans-serif; }
       .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
-      .eyebrow { font-size: 14px; font-weight: 600; letter-spacing: 1.4px; }
+      .brand { font-size: 15px; font-weight: 700; letter-spacing: 1.3px; }
       .headline { font-size: 34px; font-weight: 650; letter-spacing: 0; }
       .subtitle { font-size: 16px; font-weight: 400; letter-spacing: 0; }
-      .step { font-size: 13px; font-weight: 700; letter-spacing: 1px; }
-      .card-title { font-size: 23px; font-weight: 650; letter-spacing: 0; }
-      .card-subtitle { font-size: 14px; font-weight: 400; letter-spacing: 0; }
-      .chip { font-size: 12px; font-weight: 500; letter-spacing: 0; }
-      .route { font-size: 14px; font-weight: 600; letter-spacing: 0; }
-      .foot { font-size: 13px; font-weight: 500; letter-spacing: 0; }
+      .lane-no { font-size: 13px; font-weight: 700; letter-spacing: 1px; }
+      .lane-title { font-size: 24px; font-weight: 650; letter-spacing: 0; }
+      .lane-en { font-size: 12px; font-weight: 600; letter-spacing: 1px; }
+      .node-title { font-size: 20px; font-weight: 650; letter-spacing: 0; }
+      .node-sub { font-size: 14px; font-weight: 400; letter-spacing: 0; }
+      .small { font-size: 12px; font-weight: 500; letter-spacing: 0; }
+      .tiny { font-size: 11px; font-weight: 500; letter-spacing: 0; }
+      .gate { font-size: 16px; font-weight: 650; letter-spacing: 0; }
+      .gate-sub { font-size: 12px; font-weight: 500; letter-spacing: 0; }
+      .edge { font-size: 12px; font-weight: 650; letter-spacing: 0; }
+      .footer { font-size: 12px; font-weight: 600; letter-spacing: 0; }
     </style>
   </defs>
 
-  <rect width="1600" height="720" fill="#F6F8FB"/>
-  <rect width="1600" height="720" fill="url(#grid)"/>
-  <rect x="0" y="0" width="12" height="720" fill="#172131"/>
+  <rect width="1920" height="1120" fill="#F6F8FB"/>
+  <rect width="1920" height="1120" fill="url(#grid)"/>
+  <rect width="12" height="1120" fill="#172131"/>
 
   <g class="sans">
-    <g transform="translate(72 58)">
-      <rect x="0" y="0" width="30" height="30" rx="7" fill="#172131"/>
-      <path d="M8 10h14M8 15h9M8 20h14" stroke="#55D6BE" stroke-width="2.2" stroke-linecap="round"/>
-      <text x="44" y="20" class="eyebrow" fill="#172131">EVOSTOCK LAB</text>
+    <!-- Header -->
+    <g transform="translate(64 46)">
+      <rect width="32" height="32" rx="7" fill="#172131"/>
+      <path d="M8 10h16M8 16h11M8 22h16" stroke="#55D6BE" stroke-width="2.2" stroke-linecap="round"/>
+      <text x="46" y="22" class="brand" fill="#172131">EVOSTOCK LAB</text>
+    </g>
+    <text x="64" y="125" class="headline" fill="#172131">自进化股票研究：从事实门禁到规则晋级</text>
+    <text x="64" y="158" class="subtitle" fill="#657286">不是一次性选股，而是一条可重放、可验证、可回滚的决策学习链</text>
+
+    <g transform="translate(1356 58)">
+      <rect width="138" height="34" rx="17" fill="#EAF2FF" stroke="#BFD4F4"/>
+      <circle cx="18" cy="17" r="4" fill="#2D6CDF"/><text x="31" y="22" class="small mono" fill="#294A7D">APPEND-ONLY</text>
+      <rect x="150" width="148" height="34" rx="17" fill="#E9F8F4" stroke="#B9E4D9"/>
+      <circle cx="168" cy="17" r="4" fill="#10866E"/><text x="181" y="22" class="small mono" fill="#276A5B">NO LOOK-AHEAD</text>
+      <rect x="310" width="128" height="34" rx="17" fill="#FFF4E5" stroke="#EBCF9F"/>
+      <circle cx="328" cy="17" r="4" fill="#C47A13"/><text x="341" y="22" class="small mono" fill="#815718">FAIL CLOSED</text>
     </g>
 
-    <text x="72" y="132" class="headline" fill="#172131">让每一次判断，都成为下一次判断的证据</text>
-    <text x="72" y="164" class="subtitle" fill="#657286">Evidence-first self-evolving stock research loop</text>
+    <!-- Lane backgrounds -->
+    <rect x="40" y="190" width="1840" height="230" rx="8" fill="#FFFFFF" opacity="0.72" stroke="#D8E0E9"/>
+    <rect x="40" y="438" width="1840" height="330" rx="8" fill="#FFFFFF" opacity="0.76" stroke="#D8E0E9"/>
+    <rect x="40" y="786" width="1840" height="254" rx="8" fill="#FFFFFF" opacity="0.72" stroke="#D8E0E9"/>
 
-    <g transform="translate(1111 70)">
-      <rect x="0" y="0" width="128" height="34" rx="17" fill="#EAF2FF" stroke="#BFD4F4"/>
-      <circle cx="18" cy="17" r="4" fill="#2D6CDF"/>
-      <text x="31" y="22" class="chip mono" fill="#294A7D">APPEND-ONLY</text>
-      <rect x="140" y="0" width="142" height="34" rx="17" fill="#E9F8F4" stroke="#B9E4D9"/>
-      <circle cx="158" cy="17" r="4" fill="#11866F"/>
-      <text x="171" y="22" class="chip mono" fill="#276A5B">NO LOOK-AHEAD</text>
-      <rect x="294" y="0" width="122" height="34" rx="17" fill="#FFF4E5" stroke="#EBCF9F"/>
-      <circle cx="312" cy="17" r="4" fill="#C47A13"/>
-      <text x="325" y="22" class="chip mono" fill="#815718">FAIL CLOSED</text>
+    <!-- Lane labels -->
+    <g transform="translate(64 222)">
+      <rect width="46" height="28" rx="6" fill="#E4F7F6"/><text x="13" y="20" class="lane-no mono" fill="#13777A">01</text>
+      <text x="0" y="68" class="lane-title" fill="#172131">事实层</text>
+      <text x="0" y="91" class="lane-en mono" fill="#657286">EVIDENCE</text>
+      <text x="0" y="130" class="small" fill="#657286">来源有优先级</text>
+      <text x="0" y="151" class="small" fill="#657286">缺失不填零</text>
+      <text x="0" y="172" class="small" fill="#657286">异常先隔离</text>
+    </g>
+    <g transform="translate(64 474)">
+      <rect width="46" height="28" rx="6" fill="#EAF2FF"/><text x="13" y="20" class="lane-no mono" fill="#2D6CDF">02</text>
+      <text x="0" y="68" class="lane-title" fill="#172131">决策层</text>
+      <text x="0" y="91" class="lane-en mono" fill="#657286">DECISION</text>
+      <text x="0" y="130" class="small" fill="#657286">多角色独立审阅</text>
+      <text x="0" y="151" class="small" fill="#657286">主代理处理分歧</text>
+      <text x="0" y="172" class="small" fill="#657286">最终决定权在用户</text>
+    </g>
+    <g transform="translate(64 818)">
+      <rect width="46" height="28" rx="6" fill="#FFF4E5"/><text x="13" y="20" class="lane-no mono" fill="#A66C1B">03</text>
+      <text x="0" y="68" class="lane-title" fill="#172131">学习层</text>
+      <text x="0" y="91" class="lane-en mono" fill="#657286">LEARNING</text>
+      <text x="0" y="130" class="small" fill="#657286">固定窗口结算</text>
+      <text x="0" y="151" class="small" fill="#657286">不拿未来改过去</text>
+      <text x="0" y="172" class="small" fill="#657286">规则可回滚</text>
     </g>
 
-    <line x1="72" y1="198" x2="1528" y2="198" stroke="#D6DEE8"/>
+    <!-- Evidence source nodes -->
+    <g transform="translate(230 226)" filter="url(#shadow)">
+      <rect width="220" height="142" rx="8" fill="#FFFFFF" stroke="#CFE1E2"/>
+      <rect width="220" height="5" rx="3" fill="#159A9C"/>
+      <text x="18" y="38" class="node-title" fill="#172131">持仓事实</text>
+      <text x="18" y="64" class="node-sub" fill="#657286">来源优先级</text>
+      <rect x="18" y="82" width="184" height="24" rx="5" fill="#EAF7F6"/><text x="29" y="99" class="tiny" fill="#276A6A">聊天校正 ＞ 已核验成交</text>
+      <text x="18" y="126" class="small" fill="#657286">截图仅作可选补充核验</text>
+    </g>
 
-    <!-- 01 Evidence -->
-    <g transform="translate(72 238)" filter="url(#shadow)">
-      <rect width="220" height="194" rx="8" fill="#FFFFFF" stroke="#D7E0EA"/>
-      <rect width="220" height="6" rx="3" fill="#159A9C"/>
-      <rect x="18" y="24" width="40" height="26" rx="6" fill="#E4F7F6"/>
-      <text x="29" y="42" class="step mono" fill="#13777A">01</text>
-      <text x="18" y="86" class="card-title" fill="#172131">事实快照</text>
-      <text x="18" y="112" class="card-subtitle" fill="#657286">只记录当时可见的信息</text>
-      <g transform="translate(18 137)">
-        <rect width="52" height="26" rx="6" fill="#F0F3F7"/><text x="12" y="18" class="chip" fill="#4B596C">市场</text>
-        <rect x="60" width="52" height="26" rx="6" fill="#F0F3F7"/><text x="72" y="18" class="chip" fill="#4B596C">公司</text>
-        <rect x="120" width="52" height="26" rx="6" fill="#F0F3F7"/><text x="132" y="18" class="chip" fill="#4B596C">持仓</text>
+    <g transform="translate(474 226)" filter="url(#shadow)">
+      <rect width="220" height="142" rx="8" fill="#FFFFFF" stroke="#CFE1E2"/>
+      <rect width="220" height="5" rx="3" fill="#159A9C"/>
+      <text x="18" y="38" class="node-title" fill="#172131">市场上下文</text>
+      <text x="18" y="65" class="node-sub" fill="#657286">指数 · 行业 · 风险偏好</text>
+      <text x="18" y="94" class="small mono" fill="#4B596C">SPY · QQQ · IWM · VIX</text>
+      <text x="18" y="120" class="small mono" fill="#4B596C">RSP/SPY · HYG/IEF</text>
+    </g>
+
+    <g transform="translate(718 226)" filter="url(#shadow)">
+      <rect width="220" height="142" rx="8" fill="#FFFFFF" stroke="#CFE1E2"/>
+      <rect width="220" height="5" rx="3" fill="#159A9C"/>
+      <text x="18" y="38" class="node-title" fill="#172131">公司事实</text>
+      <text x="18" y="65" class="node-sub" fill="#657286">只用可核验的新证据</text>
+      <text x="18" y="94" class="small" fill="#4B596C">行情 / 成交量 / 财报</text>
+      <text x="18" y="120" class="small" fill="#4B596C">SEC / 公告 / 新闻 / 事件</text>
+    </g>
+
+    <g transform="translate(982 226)" filter="url(#shadow)">
+      <rect width="230" height="142" rx="8" fill="#172131" stroke="#172131"/>
+      <rect width="230" height="5" rx="3" fill="#55D6BE"/>
+      <text x="18" y="39" class="node-title" fill="#FFFFFF">统一事实包</text>
+      <text x="18" y="65" class="node-sub" fill="#BCC7D4">同一份输入交给所有角色</text>
+      <rect x="18" y="82" width="194" height="25" rx="5" fill="#263447"/>
+      <text x="31" y="100" class="small mono" fill="#DCE4EC">as_of · source · date</text>
+      <text x="18" y="127" class="small" fill="#9FADBC">不确定字段明确标“待确认”</text>
+    </g>
+
+    <!-- Evidence gate -->
+    <path d="M1380 210L1460 297 1380 384 1300 297Z" fill="#FFF9EE" stroke="#D9A552" stroke-width="2"/>
+    <text x="1380" y="278" text-anchor="middle" class="gate" fill="#704D19">关键门禁通过？</text>
+    <text x="1380" y="304" text-anchor="middle" class="gate-sub" fill="#815718">账号 / 分页 / 哈希</text>
+    <text x="1380" y="326" text-anchor="middle" class="gate-sub" fill="#815718">状态一致性 / 行情完整性</text>
+
+    <g transform="translate(1510 226)" filter="url(#shadow)">
+      <rect width="320" height="142" rx="8" fill="#E9F8F4" stroke="#A9DDCF"/>
+      <text x="20" y="40" class="node-title" fill="#1F6E5D">原子事实快照</text>
+      <text x="20" y="67" class="node-sub" fill="#417D70">同代提交，单一指针切换</text>
+      <text x="20" y="96" class="small" fill="#356D61">events · quarantine · waterline</text>
+      <text x="20" y="120" class="small" fill="#356D61">holdings · audit · manifest</text>
+    </g>
+
+    <g transform="translate(1280 380)">
+      <rect width="550" height="30" rx="6" fill="#FCECEF" stroke="#EDC4C9"/>
+      <text x="16" y="20" class="small mono" fill="#A84D57">FAIL CLOSED</text>
+      <text x="123" y="20" class="small" fill="#7B4B50">保留上一代持仓 · 隔离异常 · 停止新的方向性建议</text>
+    </g>
+
+    <!-- Evidence connectors -->
+    <g fill="none" stroke="#8F9CAD" stroke-width="2">
+      <path d="M340 368V394"/>
+      <path d="M584 368V394"/>
+      <path d="M828 368V394"/>
+      <path d="M340 394H1097V376" marker-end="url(#arrow)"/>
+    </g>
+    <g fill="none" stroke="#8F9CAD" stroke-width="2" marker-end="url(#arrow)">
+      <path d="M1212 297H1291"/>
+      <path d="M1469 297H1502"/>
+    </g>
+    <path d="M1380 384V394" fill="none" stroke="#C45C66" stroke-width="2" marker-end="url(#arrow-red)"/>
+    <text x="1477" y="286" class="edge" fill="#10866E">YES</text>
+    <text x="1392" y="390" class="edge" fill="#A84D57">NO</text>
+
+    <!-- Decision nodes -->
+    <g transform="translate(230 510)" filter="url(#shadow)">
+      <rect width="220" height="126" rx="8" fill="#FFFFFF" stroke="#CCD9EC"/>
+      <rect width="220" height="5" rx="3" fill="#2D6CDF"/>
+      <text x="18" y="39" class="node-title" fill="#172131">量化发现</text>
+      <text x="18" y="66" class="node-sub" fill="#657286">趋势与相对强弱扫描</text>
+      <rect x="18" y="84" width="184" height="25" rx="5" fill="#EAF2FF"/>
+      <text x="31" y="102" class="small" fill="#294A7D">Top 3 只是研究线索</text>
+    </g>
+
+    <g transform="translate(484 490)" filter="url(#shadow)">
+      <rect width="292" height="166" rx="8" fill="#FFFFFF" stroke="#CCD9EC"/>
+      <rect width="292" height="5" rx="3" fill="#2D6CDF"/>
+      <text x="18" y="38" class="node-title" fill="#172131">持续候选池</text>
+      <text x="18" y="64" class="node-sub" fill="#657286">最多 5 只，事件日志可重放</text>
+      <g transform="translate(18 82)">
+        <rect width="106" height="25" rx="5" fill="#F0F3F7"/><text x="31" y="18" class="small" fill="#4B596C">研究队列</text>
+        <path d="M111 13h12" stroke="#8F9CAD" marker-end="url(#arrow)"/>
+        <rect x="130" width="106" height="25" rx="5" fill="#F0F3F7"/><text x="143" y="18" class="small" fill="#4B596C">持续观察</text>
+        <rect y="37" width="106" height="25" rx="5" fill="#EAF2FF"/><text x="31" y="55" class="small" fill="#294A7D">接近触发</text>
+        <path d="M111 50h12" stroke="#8F9CAD" marker-end="url(#arrow)"/>
+        <rect x="130" y="37" width="144" height="25" rx="5" fill="#E9F8F4"/><text x="142" y="55" class="small" fill="#276A5B">开仓候选/待确认</text>
+      </g>
+      <text x="18" y="154" class="tiny" fill="#657286">暂停 / 移出也保留历史，避免幸存者偏差</text>
+    </g>
+
+    <g transform="translate(812 474)" filter="url(#shadow)">
+      <rect width="390" height="198" rx="8" fill="#FFFFFF" stroke="#CCD9EC"/>
+      <rect width="390" height="5" rx="3" fill="#5A5FD7"/>
+      <text x="18" y="38" class="node-title" fill="#172131">五角色独立审阅</text>
+      <text x="18" y="64" class="node-sub" fill="#657286">同一事实包，并行找证据与反证</text>
+      <g transform="translate(18 82)">
+        <rect width="168" height="29" rx="6" fill="#EEEEFC"/><text x="31" y="20" class="small" fill="#5358BE">持仓事实核验</text>
+        <rect x="180" width="174" height="29" rx="6" fill="#EEEEFC"/><text x="193" y="20" class="small" fill="#5358BE">公司事实与 SEC</text>
+        <rect y="39" width="168" height="29" rx="6" fill="#EEEEFC"/><text x="31" y="59" class="small" fill="#5358BE">基本面与买入逻辑</text>
+        <rect x="180" y="39" width="174" height="29" rx="6" fill="#EEEEFC"/><text x="193" y="59" class="small" fill="#5358BE">估值与市场预期</text>
+        <rect y="78" width="354" height="29" rx="6" fill="#FCECEF"/><text x="124" y="98" class="small" fill="#A84D57">风控与反方辩手</text>
       </g>
     </g>
 
-    <!-- 02 Research -->
-    <g transform="translate(316 238)" filter="url(#shadow)">
-      <rect width="220" height="194" rx="8" fill="#FFFFFF" stroke="#D7E0EA"/>
-      <rect width="220" height="6" rx="3" fill="#2D6CDF"/>
-      <rect x="18" y="24" width="40" height="26" rx="6" fill="#EAF2FF"/>
-      <text x="29" y="42" class="step mono" fill="#2D6CDF">02</text>
-      <text x="18" y="86" class="card-title" fill="#172131">候选研究</text>
-      <text x="18" y="112" class="card-subtitle" fill="#657286">筛选不是买入建议</text>
-      <g transform="translate(18 137)">
-        <rect width="78" height="26" rx="6" fill="#F0F3F7"/><text x="12" y="18" class="chip" fill="#4B596C">六维评分</text>
-        <rect x="86" width="98" height="26" rx="6" fill="#F0F3F7"/><text x="98" y="18" class="chip" fill="#4B596C">多角色审阅</text>
+    <!-- Arbitration gate -->
+    <path d="M1336 480L1422 567 1336 654 1250 567Z" fill="#F1F1FD" stroke="#7A7EDC" stroke-width="2"/>
+    <text x="1336" y="538" text-anchor="middle" class="gate" fill="#474CA5">主代理仲裁</text>
+    <text x="1336" y="563" text-anchor="middle" class="gate-sub" fill="#5358BE">新证据改变逻辑？</text>
+    <text x="1336" y="585" text-anchor="middle" class="gate-sub" fill="#5358BE">估值透支？风控否决？</text>
+    <text x="1336" y="607" text-anchor="middle" class="gate-sub" fill="#5358BE">市场是否显著逆风？</text>
+
+    <g transform="translate(1460 478)" filter="url(#shadow)">
+      <rect width="350" height="162" rx="8" fill="#172131" stroke="#172131"/>
+      <rect width="350" height="5" rx="3" fill="#75E1CC"/>
+      <text x="20" y="39" class="node-title" fill="#FFFFFF">条件式动作</text>
+      <text x="20" y="66" class="node-sub" fill="#BCC7D4">不是目标价，也不自动下单</text>
+      <text x="20" y="95" class="small" fill="#75E1CC">现有持仓</text>
+      <text x="100" y="95" class="small" fill="#DCE4EC">持有 / 警戒 / 减仓 / 卖出审查 / 加仓候选</text>
+      <text x="20" y="124" class="small" fill="#75E1CC">新开仓</text>
+      <text x="100" y="124" class="small" fill="#DCE4EC">开仓候选/待确认 · 暂不推荐</text>
+      <text x="20" y="149" class="tiny" fill="#9FADBC">写清：满足什么条件再行动 / 当前不要做什么</text>
+    </g>
+
+    <g transform="translate(1460 676)">
+      <rect width="350" height="66" rx="8" fill="#EAF2FF" stroke="#BFD4F4"/>
+      <text x="18" y="27" class="small mono" fill="#2D6CDF">DECISION LOG</text>
+      <text x="18" y="50" class="small" fill="#294A7D">decision_id · 条件 · 最强反证 · 禁止动作 · 送达状态</text>
+    </g>
+
+    <!-- Decision connectors -->
+    <g fill="none" stroke="#8F9CAD" stroke-width="2" marker-end="url(#arrow)">
+      <path d="M450 573H476"/>
+      <path d="M776 573H804"/>
+      <path d="M1202 567H1241"/>
+      <path d="M1428 567H1452"/>
+      <path d="M1635 640V668"/>
+    </g>
+    <path d="M1670 368V438H1010V466" fill="none" stroke="#2D6CDF" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+    <path d="M1670 438H630V482" fill="none" stroke="#2D6CDF" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <text x="1448" y="432" class="edge" fill="#2D6CDF">已验证事实进入研究</text>
+
+    <!-- Learning nodes -->
+    <g transform="translate(230 842)" filter="url(#shadow)">
+      <rect width="228" height="130" rx="8" fill="#FFFFFF" stroke="#E6D2B1"/>
+      <rect width="228" height="5" rx="3" fill="#D68A23"/>
+      <text x="18" y="38" class="node-title" fill="#172131">结果行情账本</text>
+      <text x="18" y="65" class="node-sub" fill="#657286">观察时间 ≠ 采集时间</text>
+      <rect x="18" y="83" width="192" height="26" rx="5" fill="#FFF4E5"/>
+      <text x="30" y="101" class="small mono" fill="#815718">1H · CLOSE · 1/5/20D</text>
+      <text x="18" y="122" class="tiny" fill="#657286">只追加，交易日历校验</text>
+    </g>
+
+    <g transform="translate(488 842)" filter="url(#shadow)">
+      <rect width="228" height="130" rx="8" fill="#FFFFFF" stroke="#E6D2B1"/>
+      <rect width="228" height="5" rx="3" fill="#D68A23"/>
+      <text x="18" y="38" class="node-title" fill="#172131">结果计算</text>
+      <text x="18" y="65" class="node-sub" fill="#657286">显式 as_of，无未来数据</text>
+      <text x="18" y="93" class="small" fill="#4B596C">实际组合 vs 原样持有</text>
+      <text x="18" y="117" class="small" fill="#4B596C">vs 标准化建议反事实</text>
+    </g>
+
+    <g transform="translate(746 826)" filter="url(#shadow)">
+      <rect width="310" height="162" rx="8" fill="#FFFFFF" stroke="#E6D2B1"/>
+      <rect width="310" height="5" rx="3" fill="#D68A23"/>
+      <text x="18" y="38" class="node-title" fill="#172131">日 / 周 / 月复盘</text>
+      <text x="18" y="64" class="node-sub" fill="#657286">不同周期拥有不同权限</text>
+      <g transform="translate(18 82)">
+        <rect width="82" height="57" rx="6" fill="#FFF7EA"/>
+        <text x="30" y="22" class="small" fill="#815718">每日</text><text x="16" y="43" class="tiny" fill="#657286">只记错误类型</text>
+        <rect x="94" width="82" height="57" rx="6" fill="#FFF7EA"/>
+        <text x="124" y="22" class="small" fill="#815718">每周</text><text x="105" y="43" class="tiny" fill="#657286">稳定性与误报</text>
+        <rect x="188" width="86" height="57" rx="6" fill="#FFF0D8"/>
+        <text x="218" y="22" class="small" fill="#815718">每月</text><text x="203" y="43" class="tiny" fill="#657286">才可提规则</text>
       </g>
     </g>
 
-    <!-- 03 Decision -->
-    <g transform="translate(560 238)" filter="url(#shadow)">
-      <rect width="220" height="194" rx="8" fill="#FFFFFF" stroke="#D7E0EA"/>
-      <rect width="220" height="6" rx="3" fill="#5A5FD7"/>
-      <rect x="18" y="24" width="40" height="26" rx="6" fill="#EEEEFC"/>
-      <text x="29" y="42" class="step mono" fill="#5358BE">03</text>
-      <text x="18" y="86" class="card-title" fill="#172131">条件式建议</text>
-      <text x="18" y="112" class="card-subtitle" fill="#657286">动作、条件与反证一起固化</text>
-      <g transform="translate(18 137)">
-        <rect width="116" height="26" rx="6" fill="#F0F3F7"/>
-        <text x="12" y="18" class="chip mono" fill="#4B596C">decision_id</text>
-      </g>
+    <g transform="translate(1086 842)" filter="url(#shadow)">
+      <rect width="230" height="130" rx="8" fill="#FFFFFF" stroke="#E6D2B1"/>
+      <rect width="230" height="5" rx="3" fill="#C45C66"/>
+      <text x="18" y="38" class="node-title" fill="#172131">候选经验</text>
+      <text x="18" y="65" class="node-sub" fill="#657286">尚未进入生效规则</text>
+      <text x="18" y="93" class="small" fill="#4B596C">问题 · 证据 · 反证 · 样本</text>
+      <text x="18" y="117" class="small" fill="#4B596C">边界 · 验证结果 · 建议 diff</text>
     </g>
 
-    <!-- 04 Outcomes -->
-    <g transform="translate(804 238)" filter="url(#shadow)">
-      <rect width="220" height="194" rx="8" fill="#FFFFFF" stroke="#D7E0EA"/>
-      <rect width="220" height="6" rx="3" fill="#D68A23"/>
-      <rect x="18" y="24" width="40" height="26" rx="6" fill="#FFF4E5"/>
-      <text x="29" y="42" class="step mono" fill="#A66C1B">04</text>
-      <text x="18" y="86" class="card-title" fill="#172131">结果结算</text>
-      <text x="18" y="112" class="card-subtitle" fill="#657286">真实成交与反事实分开计算</text>
-      <g transform="translate(18 137)">
-        <rect width="184" height="26" rx="6" fill="#F0F3F7"/>
-        <text x="12" y="18" class="chip mono" fill="#4B596C">1H · CLOSE · 1/5/20D</text>
-      </g>
+    <!-- Learning gate -->
+    <path d="M1470 816L1560 907 1470 998 1380 907Z" fill="#FFF9EE" stroke="#D9A552" stroke-width="2"/>
+    <text x="1470" y="868" text-anchor="middle" class="gate" fill="#704D19">晋级门槛</text>
+    <text x="1470" y="893" text-anchor="middle" class="gate-sub" fill="#815718">20+ 独立信号</text>
+    <text x="1470" y="915" text-anchor="middle" class="gate-sub" fill="#815718">跨市场环境 · 时序留出</text>
+    <text x="1470" y="937" text-anchor="middle" class="gate-sub" fill="#815718">成本后改善 · 回撤不恶化</text>
+
+    <g transform="translate(1600 838)" filter="url(#shadow)">
+      <rect width="230" height="138" rx="8" fill="#E9F8F4" stroke="#A9DDCF"/>
+      <rect width="230" height="5" rx="3" fill="#10866E"/>
+      <text x="18" y="39" class="node-title" fill="#1F6E5D">规则新版本</text>
+      <text x="18" y="66" class="node-sub" fill="#417D70">用户确认后才生效</text>
+      <text x="18" y="95" class="small" fill="#356D61">保留旧版本与证据窗口</text>
+      <text x="18" y="120" class="small" fill="#356D61">记录适用边界与回滚方式</text>
     </g>
 
-    <!-- 05 Review -->
-    <g transform="translate(1048 238)" filter="url(#shadow)">
-      <rect width="220" height="194" rx="8" fill="#FFFFFF" stroke="#D7E0EA"/>
-      <rect width="220" height="6" rx="3" fill="#C45C66"/>
-      <rect x="18" y="24" width="40" height="26" rx="6" fill="#FCECEF"/>
-      <text x="29" y="42" class="step mono" fill="#A84D57">05</text>
-      <text x="18" y="86" class="card-title" fill="#172131">无未来复盘</text>
-      <text x="18" y="112" class="card-subtitle" fill="#657286">按错误类型积累候选经验</text>
-      <g transform="translate(18 137)">
-        <rect width="184" height="26" rx="6" fill="#F0F3F7"/>
-        <text x="12" y="18" class="chip" fill="#4B596C">实际 vs 持有 vs 建议</text>
-      </g>
+    <!-- Learning connectors -->
+    <g fill="none" stroke="#8F9CAD" stroke-width="2" marker-end="url(#arrow)">
+      <path d="M458 907H480"/>
+      <path d="M716 907H738"/>
+      <path d="M1056 907H1078"/>
+      <path d="M1316 907H1371"/>
+      <path d="M1569 907H1592"/>
+    </g>
+    <path d="M1635 742V782H344V834" fill="none" stroke="#D68A23" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <text x="1270" y="776" class="edge" fill="#A66C1B">决策、送达与后续成交进入结果计算</text>
+
+    <!-- Reject loop -->
+    <path d="M1470 998V1018H1201V980" fill="none" stroke="#C45C66" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#arrow-red)"/>
+    <text x="1316" y="1012" text-anchor="middle" class="edge" fill="#A84D57">NO：继续积累证据，不污染生效规则</text>
+    <text x="1575" y="896" class="edge" fill="#10866E">YES</text>
+
+    <!-- Approved-rule feedback loop -->
+    <path d="M1715 838V778H1818V754H630V664" fill="none" stroke="#10866E" stroke-width="3" marker-end="url(#arrow-green)"/>
+    <g transform="translate(956 728)">
+      <rect width="350" height="32" rx="7" fill="#E9F8F4" stroke="#B9E4D9"/>
+      <circle cx="19" cy="16" r="5" fill="#10866E"/>
+      <path d="M16 16l2 2 4-5" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="34" y="21" class="small" fill="#276A5B">已批准规则进入下一轮候选与决策</text>
     </g>
 
-    <!-- 06 Validation -->
-    <g transform="translate(1292 238)" filter="url(#shadow)">
-      <rect width="236" height="194" rx="8" fill="#172131" stroke="#172131"/>
-      <rect width="236" height="6" rx="3" fill="#55D6BE"/>
-      <rect x="18" y="24" width="40" height="26" rx="6" fill="#263447"/>
-      <text x="29" y="42" class="step mono" fill="#75E1CC">06</text>
-      <text x="18" y="86" class="card-title" fill="#FFFFFF">规则验证</text>
-      <text x="18" y="112" class="card-subtitle" fill="#B7C2CF">证据足够，才允许晋级</text>
-      <g transform="translate(18 132)">
-        <text x="0" y="12" class="chip" fill="#DCE4EC">20+ 独立信号</text>
-        <circle cx="116" cy="8" r="2" fill="#55D6BE"/>
-        <text x="126" y="12" class="chip" fill="#DCE4EC">时序留出</text>
-        <text x="0" y="38" class="chip" fill="#DCE4EC">交易成本后改善</text>
-        <circle cx="116" cy="34" r="2" fill="#55D6BE"/>
-        <text x="126" y="38" class="chip" fill="#DCE4EC">回撤不恶化</text>
-      </g>
-    </g>
-
-    <!-- Main arrows -->
-    <g stroke="#98A5B5" stroke-width="2" fill="none" marker-end="url(#arrow-neutral)">
-      <path d="M296 335 H307"/>
-      <path d="M540 335 H551"/>
-      <path d="M784 335 H795"/>
-      <path d="M1028 335 H1039"/>
-      <path d="M1272 335 H1283"/>
-    </g>
-
-    <!-- Promotion loop -->
-    <path d="M1410 432 V518 Q1410 536 1392 536 H448 Q426 536 426 514 V444" fill="none" stroke="#11866F" stroke-width="3" marker-end="url(#arrow-green)"/>
-    <g transform="translate(710 515)">
-      <rect width="326" height="42" rx="8" fill="#E9F8F4" stroke="#B9E4D9"/>
-      <circle cx="22" cy="21" r="6" fill="#11866F"/>
-      <path d="M19 21l2 2 4-5" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      <text x="40" y="27" class="route" fill="#276A5B">通过：规则晋级，进入下一轮研究</text>
-    </g>
-
-    <!-- Hold branch -->
-    <path d="M1410 432 V622 H1230" fill="none" stroke="#A9B4C2" stroke-width="2" stroke-dasharray="7 7" marker-end="url(#arrow-neutral)"/>
-    <g transform="translate(774 596)">
-      <rect width="438" height="52" rx="8" fill="#FFFFFF" stroke="#D7E0EA"/>
-      <rect x="14" y="13" width="54" height="26" rx="6" fill="#F0F3F7"/>
-      <text x="25" y="31" class="chip mono" fill="#657286">HOLD</text>
-      <text x="84" y="32" class="route" fill="#4B596C">未通过：保留候选经验，不污染生效规则</text>
-    </g>
-
-    <g transform="translate(72 656)">
-      <line x1="0" y1="0" x2="1456" y2="0" stroke="#D6DEE8"/>
-      <text x="0" y="30" class="foot" fill="#657286">NOT A PRICE PREDICTION MODEL</text>
-      <circle cx="260" cy="25" r="2" fill="#98A5B5"/>
-      <text x="276" y="30" class="foot" fill="#657286">NO AUTOMATIC TRADING</text>
-      <text x="1456" y="30" text-anchor="end" class="foot mono" fill="#172131">EVIDENCE → DECISION → OUTCOME → LEARNING</text>
-    </g>
+    <!-- Footer -->
+    <line x1="64" y1="1062" x2="1856" y2="1062" stroke="#D6DEE8"/>
+    <text x="64" y="1092" class="footer mono" fill="#657286">NO PRICE PREDICTION</text>
+    <circle cx="248" cy="1088" r="2" fill="#98A5B5"/>
+    <text x="264" y="1092" class="footer mono" fill="#657286">NO AUTOMATIC TRADING</text>
+    <circle cx="478" cy="1088" r="2" fill="#98A5B5"/>
+    <text x="494" y="1092" class="footer mono" fill="#657286">HUMAN FINAL DECISION</text>
+    <text x="1856" y="1092" text-anchor="end" class="footer mono" fill="#172131">EVIDENCE → DECISION → OUTCOME → LEARNING → VALIDATION</text>
   </g>
 </svg>
