@@ -5,9 +5,9 @@ meta:
   theme: academic-color
   palette: evostock-publication
   layout: horizontal
-  canvas: 1660x840
+  canvas: 1280x960
   routing: orthogonal
-  print: { widthPt: 830, minPt: 8 }
+  print: { widthPt: 640, minPt: 8 }
   title: "EvoStock Lab 从研究判断到受治理学习的完整闭环"
   description: "可信事实经过完整性门禁和多角色研究形成条件式建议，用户保留最终决定权；后续结果只有通过验证后才能反馈为生产规则。"
   legend: "编号表示当次决策主流程；实线表示事实与结果流；虚线表示只有已批准规则才能进入的治理反馈。颜色、图标和文字共同表达语义。"
@@ -27,71 +27,70 @@ nodes:
     label: "01  可信事实\n成交 · 市场 · 公司"
     type: database
     size: large
-    position: { x: 140, y: 152 }
+    position: { x: 80, y: 180 }
     style: { fillColor: $palette3-fill, strokeColor: $palette3-stroke, fontColor: $palette3-text }
 
   - id: integrity_gate
     label: "02  证据门禁\n身份 · 时点 · 来源"
     type: decision
     size: large
-    position: { x: 400, y: 152 }
+    position: { x: 350, y: 180 }
     style: { fillColor: $palette4-fill, strokeColor: $palette4-stroke, fontColor: $palette4-text }
 
   - id: research
     label: "03  交叉研究\n趋势 · 估值 · 风险"
     type: agent
     size: large
-    position: { x: 680, y: 152 }
+    position: { x: 620, y: 180 }
     style: { fillColor: $palette1-fill, strokeColor: $palette1-stroke, fontColor: $palette1-text }
 
   - id: recommendation
     label: "04  条件式建议\n动作 · 条件 · 禁止"
     type: document
     size: large
-    position: { x: 960, y: 152 }
+    position: { x: 890, y: 180 }
     style: { fillColor: $palette2-fill, strokeColor: $palette2-stroke, fontColor: $palette2-text }
 
   - id: user_choice
     label: "05  用户决策\n最终决定权"
     type: user
-    icon: mxgraph.cisco19.user2
     size: large
-    position: { x: 1240, y: 152 }
-    style: { fillColor: $palette4-fill, strokeColor: $palette4-stroke, fontColor: $text }
+    position: { x: 1160, y: 180 }
+    style: { fillColor: $palette4-fill, strokeColor: $palette4-stroke, fontColor: $palette4-text }
 
   - id: action_result
     label: "06  操作与结果\n留痕 · 不猜因果"
     type: process
     icon: mxgraph.mscae.general.graph
     size: large
-    position: { x: 1520, y: 152 }
+    position: { x: 1160, y: 700 }
     style: { fillColor: $palette2-fill, strokeColor: $palette2-stroke, fontColor: $text }
 
   - id: fail_closed
     label: "证据不足\n停止输出新建议"
     type: terminal
     size: medium
-    position: { x: 400, y: 360 }
+    position: { x: 350, y: 380 }
     style: { fillColor: $errorLight, strokeColor: $error, fontColor: $text }
 
   - id: learning_phase
     label: "B  结果评估与规则学习"
     type: text
-    bounds: { x: 40, y: 472, width: 320, height: 48 }
+    bounds: { x: 40, y: 490, width: 320, height: 48 }
     style: { fontSize: 24, bold: true, align: left, fontColor: $palette1-stroke }
 
   - id: outcome_evaluation
     label: "固定窗口评估\n实际 / 持有 / 建议"
     type: process
     size: large
-    position: { x: 1520, y: 620 }
+    position: { x: 890, y: 700 }
     style: { fillColor: $palette3-fill, strokeColor: $palette3-stroke, fontColor: $palette3-text }
 
   - id: episode_memory
     label: "案例记忆\n因子 · 环境 · 反证"
     type: memory
     size: large
-    position: { x: 1160, y: 620 }
+    position: { x: 620, y: 700 }
     style: { fillColor: $palette1-fill, strokeColor: $palette1-stroke, fontColor: $palette1-text }
 
   - id: temporal_validation
@@ -99,7 +98,7 @@ nodes:
     type: process
     icon: lucide.alarm-clock
     size: large
-    position: { x: 780, y: 620 }
+    position: { x: 350, y: 700 }
     style: { fillColor: $palette4-fill, strokeColor: $palette4-stroke, fontColor: $text }
 
   - id: approved_rules
@@ -107,13 +106,13 @@ nodes:
     type: decision
     icon: lucide.shield
     size: large
-    position: { x: 440, y: 620 }
+    position: { x: 80, y: 700 }
     style: { fillColor: $palette2-fill, strokeColor: $palette2-stroke, fontColor: $text }
 
   - id: legend
     label: "主流程 → 可信事实到用户决策    学习流 → 结果到规则验证    虚线 ⇢ 仅已批准规则可反馈    不自动下单"
     type: text
-    bounds: { x: 160, y: 790, width: 1340, height: 36 }
+    bounds: { x: 120, y: 910, width: 1040, height: 36 }
     style: { fontSize: 16, align: center }
 
 edges:
@@ -146,6 +145,5 @@ edges:
       dashPattern: "10 6"
       strokeColor: $palette1-stroke
     waypoints:
-      - { x: 440, y: 448 }
-      - { x: 800, y: 448 }
-      - { x: 800, y: 176 }
+      - { x: 80, y: 550 }
+      - { x: 620, y: 550 }

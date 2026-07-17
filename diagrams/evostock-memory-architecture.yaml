@@ -5,9 +5,9 @@ meta:
   theme: academic-color
   palette: evostock-publication
   layout: horizontal
-  canvas: 1400x840
+  canvas: 1200x960
   routing: orthogonal
-  print: { widthPt: 800, minPt: 8 }
+  print: { widthPt: 600, minPt: 8 }
   title: "EvoStock Lab 持久化记忆如何参与下一次判断"
   description: "每次决策及其结果形成可检索案例；当前事实始终优先，历史案例只提供上下文，只有通过验证并经用户确认的规则才具备约束力。"
   legend: "上层是可检索决策记忆，下层是学习与规则治理；实线表示可进入下一次判断的数据流，虚线表示受治理反馈。颜色、图标和文字共同表达语义。"
@@ -28,14 +28,14 @@ nodes:
     type: document
     icon: lucide.file-text
     size: large
-    position: { x: 120, y: 188 }
+    position: { x: 100, y: 190 }
     style: { fillColor: $palette3-fill, strokeColor: $palette3-stroke, fontColor: $text }
 
   - id: episode_library
     label: "案例库\n判断与结果配对"
     type: database
     size: large
-    position: { x: 380, y: 188 }
+    position: { x: 360, y: 190 }
     style: { fillColor: $palette1-fill, strokeColor: $palette1-stroke, fontColor: $palette1-text }
 
   - id: similar_cases
@@ -43,21 +43,21 @@ nodes:
     type: process
     icon: lucide.search
     size: large
-    position: { x: 640, y: 188 }
+    position: { x: 620, y: 190 }
     style: { fillColor: $palette2-fill, strokeColor: $palette2-stroke, fontColor: $text }
 
   - id: current_facts
     label: "当前事实\n始终优先"
     type: database
     size: medium
-    position: { x: 940, y: 88 }
+    position: { x: 900, y: 100 }
     style: { fillColor: $palette2-fill, strokeColor: $palette2-stroke, fontColor: $palette2-text }
 
   - id: decision_context
     label: "决策上下文\n当前事实优先\n历史案例作参考"
     type: process
     size: large
-    position: { x: 940, y: 292 }
+    position: { x: 900, y: 400 }
     style: { fillColor: $palette4-fill, strokeColor: $palette4-stroke, fontColor: $palette4-text }
 
   - id: next_decision
@@ -65,13 +65,13 @@ nodes:
     type: agent
     icon: lucide.brain-circuit
     size: large
-    position: { x: 1240, y: 292 }
+    position: { x: 1120, y: 400 }
     style: { fillColor: $palette1-fill, strokeColor: $palette1-stroke, fontColor: $text }
 
   - id: governance_phase
     label: "B  学习与规则治理"
     type: text
-    bounds: { x: 40, y: 462, width: 300, height: 48 }
+    bounds: { x: 40, y: 550, width: 240, height: 48 }
     style: { fontSize: 24, bold: true, align: left, fontColor: $palette2-stroke }
 
   - id: outcome_evaluation
@@ -79,34 +79,34 @@ nodes:
     type: process
     icon: mxgraph.mscae.general.graph
     size: large
-    position: { x: 380, y: 620 }
+    position: { x: 300, y: 760 }
     style: { fillColor: $palette3-fill, strokeColor: $palette3-stroke, fontColor: $text }
 
   - id: candidate_insight
     label: "候选经验\n正反案例都保留"
     type: memory
     size: large
-    position: { x: 640, y: 620 }
+    position: { x: 560, y: 760 }
     style: { fillColor: $palette1-fill, strokeColor: $palette1-stroke, fontColor: $palette1-text }
 
   - id: rule_validation
     label: "验证门禁\n样本 · 成本 · 回撤"
     type: decision
     size: large
-    position: { x: 900, y: 620 }
+    position: { x: 820, y: 760 }
     style: { fillColor: $palette4-fill, strokeColor: $palette4-stroke, fontColor: $palette4-text }
 
   - id: approved_rules
     label: "已批准规则\n达标 + 用户确认"
     type: process
     size: large
-    position: { x: 1160, y: 620 }
+    position: { x: 1080, y: 760 }
     style: { fillColor: $palette2-fill, strokeColor: $palette2-stroke, fontColor: $palette2-text }
 
   - id: exclusions
     label: "未成熟结果 · 不可比案例 · 未批准经验  →  不直接改变动作"
     type: text
-    bounds: { x: 500, y: 780, width: 640, height: 36 }
+    bounds: { x: 300, y: 910, width: 720, height: 36 }
     style: { fontSize: 16, bold: true, align: center, fontColor: $error }
 
 edges:
@@ -137,5 +137,5 @@ edges:
       dashPattern: "10 6"
       strokeColor: $palette2-stroke
     waypoints:
-      - { x: 1160, y: 460 }
-      - { x: 940, y: 460 }
+      - { x: 1080, y: 590 }
+      - { x: 900, y: 590 }
