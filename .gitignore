@@ -10,6 +10,7 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+.drawio-tmp/
 
 # All portfolio, broker, email, report, and runtime state is private by default.
 data/*

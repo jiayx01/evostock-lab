@@ -11,7 +11,7 @@ import math
 import os
 import sys
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
@@ -21,7 +21,12 @@ import exchange_calendars as xcals
 import pandas as pd
 
 from append_decision_event import DecisionEventError, event_time, normalize_event, validate_sequence
-from append_outcome_price_bar import BAR_COLUMNS, PriceBarError, normalize as normalize_bar
+from append_outcome_price_bar import (
+    BAR_COLUMNS,
+    INTRADAY_INTERVAL,
+    PriceBarError,
+    normalize as normalize_bar,
+)
 from evostock_paths import data_path
 from rebuild_holdings_from_broker_events import (
     ReconciliationError,
@@ -33,7 +38,7 @@ from rebuild_holdings_from_broker_events import (
 
 ET = ZoneInfo("America/New_York")
 XNYS = xcals.get_calendar("XNYS")
-CALCULATOR_VERSION = "2.0.0"
+CALCULATOR_VERSION = "2.1.0"
 HORIZONS = (("1h", 0), ("close", 0), ("1d", 1), ("5d", 5), ("20d", 20))
 DEFAULT_EXPOSURE = {
     "继续持有": 1.0,
@@ -147,29 +152,41 @@ def load_bars(path: Path, as_of: datetime) -> list[dict[str, Any]]:
         raw_rows = list(reader)
     rows: list[dict[str, Any]] = []
     seen_ids: dict[str, dict[str, str]] = {}
-    seen_keys: dict[tuple[str, str, str], dict[str, str]] = {}
+    seen_keys: dict[tuple[str, datetime, str], dict[str, str]] = {}
     for row_number, raw in enumerate(raw_rows, start=2):
         try:
-            normalized = normalize_bar(raw)
+            normalized = normalize_bar(raw, require_final=False)
         except PriceBarError as exc:
             raise OutcomeError(f"invalid price bar at row {row_number}") from exc
         if normalized["bar_id"] in seen_ids:
             if seen_ids[normalized["bar_id"]] != normalized:
                 raise OutcomeError(f"conflicting bar_id at row {row_number}")
             continue
-        key = (normalized["ticker"], normalized["bar_at"], normalized["bar_type"])
-        if key in seen_keys and seen_keys[key] != normalized:
-            raise OutcomeError(f"conflicting economic price bar at row {row_number}")
         seen_ids[normalized["bar_id"]] = normalized
-        seen_keys[key] = normalized
         bar_at = parse_time(normalized["bar_at"], "bar_at")
         collected_at = parse_time(normalized["collected_at"], "collected_at")
         if bar_at > as_of or collected_at > as_of:
             continue
+        price_at = bar_at + INTRADAY_INTERVAL if normalized["bar_type"] == "INTRADAY" else bar_at
+        if normalized["bar_type"] == "INTRADAY" and collected_at < price_at:
+            # Legacy ledgers may contain a still-forming minute. It is an observation,
+            # not an outcome price, and must never compete with the completed bar.
+            continue
+        key = (
+            normalized["ticker"],
+            bar_at.astimezone(timezone.utc),
+            normalized["bar_type"],
+        )
+        if key in seen_keys:
+            if seen_keys[key]["close"] != normalized["close"]:
+                raise OutcomeError(f"conflicting completed economic price bar at row {row_number}")
+            continue
+        seen_keys[key] = normalized
         rows.append(
             {
                 **normalized,
                 "bar_at_dt": bar_at,
+                "price_at_dt": price_at,
                 "collected_at_dt": collected_at,
                 "close_value": number(normalized["close"], "close"),
             }
@@ -259,13 +276,13 @@ def target_bar(
                 for bar in ticker_bars
                 if bar["bar_type"] == "INTRADAY"
                 and target - timedelta(minutes=15)
-                <= bar["bar_at_dt"]
+                <= bar["price_at_dt"]
                 <= target + timedelta(minutes=15)
             ),
             key=lambda bar: (
-                abs((bar["bar_at_dt"] - target).total_seconds()),
-                bar["bar_at_dt"] < target,
-                bar["bar_at_dt"],
+                abs((bar["price_at_dt"] - target).total_seconds()),
+                bar["price_at_dt"] < target,
+                bar["price_at_dt"],
             ),
         )
         return (candidates[0], "MATURED") if candidates else (None, "PENDING_DATA")
@@ -292,6 +309,40 @@ def target_bar(
         key=lambda bar: bar["bar_at_dt"],
     )
     return (candidates[-1], "MATURED") if candidates else (None, "PENDING_DATA")
+
+
+def executable_reference_bar(
+    bars: list[dict[str, Any]],
+    ticker: str,
+    delivered_at: datetime,
+    as_of: datetime,
+    capture_window: timedelta = timedelta(minutes=5),
+) -> tuple[dict[str, Any] | None, str]:
+    expected_start = delivered_at.replace(second=0, microsecond=0)
+    if delivered_at > expected_start:
+        expected_start += INTRADAY_INTERVAL
+    decision_session = pd.Timestamp(delivered_at.astimezone(ET).date().isoformat())
+    if not XNYS.is_session(decision_session):
+        return None, "NOT_APPLICABLE"
+    session_close = XNYS.session_close(decision_session).to_pydatetime()
+    if (expected_start + INTRADAY_INTERVAL).astimezone(session_close.tzinfo) > session_close:
+        return None, "NOT_APPLICABLE"
+    candidates = sorted(
+        (
+            bar
+            for bar in bars
+            if bar["ticker"] == ticker
+            and bar["bar_type"] == "INTRADAY"
+            and bar["bar_at_dt"].astimezone(timezone.utc)
+            == expected_start.astimezone(timezone.utc)
+        ),
+        key=lambda bar: (bar["collected_at_dt"], bar["bar_id"]),
+    )
+    if candidates:
+        return candidates[0], "MATURED"
+    if as_of < delivered_at + capture_window + INTRADAY_INTERVAL:
+        return None, "PENDING"
+    return None, "PENDING_DATA"
 
 
 def max_drawdown_pct(prices: list[float]) -> float | None:
@@ -349,9 +400,9 @@ def exact_actual_result(
     cash = 0.0
     event_index = 0
     values = [initial_value]
-    timeline = sorted(path_bars, key=lambda bar: bar["bar_at_dt"])
-    for bar in timeline + [{"bar_at_dt": end_at, "close_value": end_price}]:
-        while event_index < len(events) and events[event_index][0] <= bar["bar_at_dt"]:
+    timeline = sorted(path_bars, key=lambda bar: bar["price_at_dt"])
+    for bar in timeline + [{"price_at_dt": end_at, "close_value": end_price}]:
+        while event_index < len(events) and events[event_index][0] <= bar["price_at_dt"]:
             _, row = events[event_index]
             quantity = number(row.get("quantity"), "quantity")
             price = number(row.get("price"), "price")
@@ -390,7 +441,8 @@ def build_rows(
     for decision in decisions:
         decision_id = decision["decision_id"]
         created_at = parse_time(decision["occurred_at"], "decision occurred_at")
-        decision_at = delivered.get(decision_id, created_at)
+        delivered_at = delivered.get(decision_id)
+        decision_at = delivered_at or created_at
         payload = decision["payload"]
         holdings = payload.get("holdings")
         if not isinstance(holdings, list) or not holdings:
@@ -406,9 +458,11 @@ def build_rows(
             action = str(item.get("action") or "").strip()
             if not action:
                 raise OutcomeError(f"decision {decision_id}/{ticker} has no action")
-            reference_price = number(item.get("reference_price"), "reference_price")
-            reference_at = parse_time(item.get("reference_price_at"), "reference_price_at")
-            if reference_at > created_at:
+            analysis_reference_price = number(item.get("reference_price"), "reference_price")
+            analysis_reference_at = parse_time(
+                item.get("reference_price_at"), "reference_price_at"
+            )
+            if analysis_reference_at > created_at:
                 raise OutcomeError(f"decision {decision_id}/{ticker} uses a future reference price")
             start_shares = optional_number(item.get("shares"), "shares")
             exposure = optional_number(item.get("recommended_exposure"), "recommended_exposure")
@@ -417,20 +471,38 @@ def build_rows(
             if exposure is not None and not 0 <= exposure <= 2:
                 raise OutcomeError(f"decision {decision_id}/{ticker} exposure must be 0-2")
 
-            for horizon, offset in HORIZONS:
-                end_bar, maturity = target_bar(
-                    bars,
-                    ticker,
-                    decision_at,
-                    horizon,
-                    offset,
-                    as_of,
+            reference_bar = None
+            reference_status = "NOT_DELIVERED"
+            if delivered_at is not None:
+                reference_bar, reference_status = executable_reference_bar(
+                    bars, ticker, delivered_at, as_of
                 )
+            reference_price = reference_bar["close_value"] if reference_bar else None
+            reference_at = reference_bar["price_at_dt"] if reference_bar else None
+
+            for horizon, offset in HORIZONS:
+                if delivered_at is None:
+                    maturity = "NOT_DELIVERED"
+                    end_bar = None
+                elif reference_bar is None:
+                    maturity = reference_status
+                    end_bar = None
+                else:
+                    end_bar, maturity = target_bar(
+                        bars,
+                        ticker,
+                        decision_at,
+                        horizon,
+                        offset,
+                        as_of,
+                    )
                 base = {
                     "decision_id": decision_id,
                     "ticker": ticker,
                     "decision_at": decision_at.isoformat(),
-                    "market_phase": str(payload.get("market_phase") or "待确认"),
+                    "market_phase": str(
+                        payload.get("market_stage") or payload.get("market_phase") or "待确认"
+                    ),
                     "advice_action": action,
                     "user_event_relation": "待成熟",
                     "outcome_horizon": horizon,
@@ -442,16 +514,25 @@ def build_rows(
                     "hold_max_drawdown_pct": "",
                     "transaction_cost_assumption": f"{transaction_cost_bps:.2f} bps on changed exposure",
                     "reference_price": fmt(reference_price),
-                    "reference_price_at": reference_at.isoformat(),
+                    "reference_price_at": reference_at.isoformat() if reference_at else "",
                     "end_price": "",
                     "end_price_at": "",
                     "price_source": "",
                     "input_sha256": input_hash,
                     "calculated_at": as_of.isoformat(),
-                    "notes": "邮件已送达" if decision_id in delivered else "邮件未送达，不纳入建议评分",
+                    "notes": (
+                        "邮件未送达，不纳入建议评分"
+                        if delivered_at is None
+                        else "邮件已送达；结果起点为送达后首个完整一分钟行情"
+                        if reference_bar is not None
+                        else (
+                            "邮件已送达；送达后5分钟内可执行参考行情尚未成熟"
+                            if reference_status == "PENDING"
+                            else "邮件已送达；缺少送达后5分钟内首个完整一分钟行情，未使用送达前分析参考价"
+                        )
+                    ),
                 }
-                if decision_id not in delivered:
-                    base["outcome_status"] = "NOT_DELIVERED"
+                if delivered_at is None or reference_bar is None:
                     rows.append(base)
                     continue
                 if end_bar is None:
@@ -459,16 +540,17 @@ def build_rows(
                     continue
 
                 end_price = end_bar["close_value"]
-                end_at = end_bar["bar_at_dt"]
+                end_at = end_bar["price_at_dt"]
                 hold_return = (end_price / reference_price - 1.0) * 100.0
                 path_bars = [
                     bar
                     for bar in bars
                     if bar["ticker"] == ticker
-                    and reference_at < bar["bar_at_dt"] <= end_at
+                    and reference_at < bar["price_at_dt"] <= end_at
                 ]
                 hold_path = [reference_price] + [
-                    bar["close_value"] for bar in sorted(path_bars, key=lambda x: x["bar_at_dt"])
+                    bar["close_value"]
+                    for bar in sorted(path_bars, key=lambda x: x["price_at_dt"])
                 ]
                 advice_return = None
                 if exposure is not None:

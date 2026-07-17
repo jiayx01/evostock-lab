@@ -1,0 +1,280 @@
+meta:
+  profile: academic-paper
+  figureType: architecture
+  source: generated
+  theme: academic
+  palette: evostock-academic
+  layout: horizontal
+  canvas: 1200x1280
+  routing: orthogonal
+  title: "EvoStock Lab 持久化记忆的分层与权限边界"
+  description: "权威事件经确定性派生和受治理召回进入下一次决策；候选经验、自动化游标与 Git 代码具有不同权限。"
+  legend: "每一行从权威记录流向派生视图、治理检查和下一次决策上下文；虚线表示候选或可重建状态，不具有直接规则权限。"
+  font:
+    primary: Times New Roman
+    cjk: Times New Roman,SimSun
+    formula: Times New Roman
+
+modules:
+  - id: canonical
+    label: "不可变事实源"
+
+  - id: derived
+    label: "确定性派生视图"
+
+  - id: governed
+    label: "召回与治理"
+
+  - id: context
+    label: "下一次决策上下文"
+
+nodes:
+  - id: fact_events
+    module: canonical
+    label: "F  事实事件\nBroker · Market · SEC"
+    type: document
+    icon: lucide.file-text
+    size: medium
+    position: { x: 120, y: 128 }
+
+  - id: decision_events
+    module: canonical
+    label: "D  决策事件\nepisode · 因子 · 反证"
+    type: document
+    icon: lucide.brain-circuit
+    size: medium
+    position: { x: 120, y: 304 }
+
+  - id: outcome_events
+    module: canonical
+    label: "O  结果事件\n价格窗口 · 数据状态"
+    type: database
+    icon: mxgraph.mscae.general.graph
+    size: medium
+    position: { x: 120, y: 480 }
+
+  - id: candidate_rules
+    module: canonical
+    label: "E  候选经验\n证据 · 边界 · 样本"
+    type: document
+    icon: lucide.file-text
+    size: medium
+    position: { x: 120, y: 656 }
+
+  - id: rule_registry
+    module: canonical
+    label: "R  规则版本\n批准 · 回滚 · 哈希"
+    type: database
+    icon: lucide.shield
+    size: medium
+    position: { x: 120, y: 832 }
+
+  - id: fact_package
+    module: derived
+    label: "当前事实包\nas_of · 来源 · 完整性"
+    type: database
+    icon: lucide.database-zap
+    size: medium
+    position: { x: 400, y: 128 }
+
+  - id: episode_index
+    module: derived
+    label: "Episode 索引\nticker · regime · factor"
+    type: process
+    icon: lucide.search
+    size: medium
+    position: { x: 400, y: 304 }
+
+  - id: outcome_matrix
+    module: derived
+    label: "结果矩阵\nactual · hold · counterfactual"
+    type: process
+    icon: lucide.layers
+    size: medium
+    position: { x: 400, y: 480 }
+
+  - id: learning_digest
+    module: derived
+    label: "Learning digest\n相似 · 失败 · 待验证"
+    type: memory
+    icon: lucide.brain-circuit
+    size: medium
+    position: { x: 400, y: 656 }
+
+  - id: active_bundle
+    module: derived
+    label: "生效规则\n仅批准版本"
+    type: database
+    icon: lucide.shield
+    size: medium
+    position: { x: 400, y: 832 }
+
+  - id: fact_gate
+    module: governed
+    label: "事实门禁\n缺失 / 冲突 / 未来 → stop"
+    type: decision
+    icon: lucide.shield
+    size: medium
+    position: { x: 680, y: 128 }
+
+  - id: episode_recall
+    module: governed
+    label: "相似召回\n仅成熟结果"
+    type: process
+    icon: lucide.search
+    size: medium
+    position: { x: 680, y: 304 }
+
+  - id: comparability
+    module: governed
+    label: "可比性检查\n样本 · 成本 · 市场分层"
+    type: decision
+    icon: lucide.layers
+    size: medium
+    position: { x: 680, y: 480 }
+
+  - id: candidate_context
+    module: governed
+    label: "候选经验\n只作上下文 · 不改动作"
+    type: memory
+    icon: lucide.brain-circuit
+    size: medium
+    position: { x: 680, y: 656 }
+
+  - id: rule_gate
+    module: governed
+    label: "规则约束\n≥20 样本\n用户确认"
+    type: decision
+    icon: lucide.shield
+    size: medium
+    position: { x: 680, y: 832 }
+
+  - id: binding_facts
+    module: context
+    label: "BINDING\n当前事实 + 完整性门禁"
+    type: memory
+    icon: lucide.database
+    size: medium
+    position: { x: 1000, y: 128 }
+
+  - id: mature_context
+    module: context
+    label: "CONTEXT\n成熟案例 + 失败反证"
+    type: memory
+    icon: lucide.search
+    size: medium
+    position: { x: 1000, y: 304 }
+
+  - id: comparable_context
+    module: context
+    label: "CONTEXT\n可比结果 + 市场分层"
+    type: memory
+    icon: lucide.layers
+    size: medium
+    position: { x: 1000, y: 480 }
+
+  - id: hypothesis_context
+    module: context
+    label: "CONTEXT ONLY\n候选经验 · 无规则权限"
+    type: memory
+    icon: lucide.brain-circuit
+    size: medium
+    position: { x: 1000, y: 656 }
+
+  - id: binding_rules
+    module: context
+    label: "BINDING\n生效规则 + 内容哈希"
+    type: memory
+    icon: lucide.shield
+    size: medium
+    position: { x: 1000, y: 832 }
+
+  - id: durable_storage
+    label: "EVOSTOCK_DATA_DIR\n加密 manifest · 可回放"
+    type: database
+    icon: lucide.database
+    size: large
+    position: { x: 208, y: 1080 }
+
+  - id: automation_memory
+    label: "运行记忆\n游标/重试\n可重建"
+    type: memory
+    icon: lucide.server-cog
+    size: large
+    position: { x: 600, y: 1080 }
+
+  - id: git_repository
+    label: "Git / GitHub\n代码/规则\n私有事件不入库"
+    type: document
+    icon: mxgraph.azure.github_code
+    size: large
+    position: { x: 992, y: 1080 }
+
+  - id: exclusions
+    label: "EXCLUDED  未来数据 · 未成熟结果 · 未批准规则"
+    type: text
+    bounds: { x: 744, y: 976, width: 400, height: 40 }
+    style:
+      fontSize: 16
+      bold: true
+      align: center
+      fontColor: $palette3-text
+
+  - id: legend
+    label: "图例  实线 → 可进入决策的受控数据流    虚线 ⇢ 候选或可重建状态    每一行均以 knowledge cutoff 为边界"
+    type: text
+    bounds: { x: 140, y: 1224, width: 920, height: 40 }
+    style: { fontSize: 16, align: center }
+
+  - id: canonical_spacer
+    module: canonical
+    label: " "
+    type: text
+    bounds: { x: 112, y: 920, width: 16, height: 32 }
+    style: { fontColor: "#FFFFFF" }
+
+  - id: derived_spacer
+    module: derived
+    label: " "
+    type: text
+    bounds: { x: 392, y: 920, width: 16, height: 32 }
+    style: { fontColor: "#FFFFFF" }
+
+  - id: governed_spacer
+    module: governed
+    label: " "
+    type: text
+    bounds: { x: 672, y: 920, width: 16, height: 32 }
+    style: { fontColor: "#FFFFFF" }
+
+  - id: context_spacer
+    module: context
+    label: " "
+    type: text
+    bounds: { x: 992, y: 920, width: 16, height: 32 }
+    style: { fontColor: "#FFFFFF" }
+
+edges:
+  - { from: fact_events, to: fact_package, type: data }
+  - { from: fact_package, to: fact_gate, type: primary }
+  - { from: fact_gate, to: binding_facts, type: primary }
+
+  - { from: decision_events, to: episode_index, type: data }
+  - { from: episode_index, to: episode_recall, type: memory_read }
+  - { from: episode_recall, to: mature_context, type: memory_read }
+
+  - { from: outcome_events, to: outcome_matrix, type: data }
+  - { from: outcome_matrix, to: comparability, type: primary }
+  - { from: comparability, to: comparable_context, type: primary }
+
+  - { from: candidate_rules, to: learning_digest, type: memory_write }
+  - { from: learning_digest, to: candidate_context, type: optional }
+  - { from: candidate_context, to: hypothesis_context, type: optional }
+
+  - { from: rule_registry, to: active_bundle, type: data }
+  - { from: active_bundle, to: rule_gate, type: primary }
+  - { from: rule_gate, to: binding_rules, type: primary }
+
+  - from: rule_registry
+    to: durable_storage
+    type: data

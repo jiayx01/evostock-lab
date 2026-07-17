@@ -1,0 +1,191 @@
+meta:
+  profile: academic-paper
+  figureType: workflow
+  source: generated
+  theme: academic
+  palette: evostock-academic
+  layout: horizontal
+  canvas: 1200x920
+  routing: orthogonal
+  title: "EvoStock Lab 可审计的决策与学习闭环"
+  description: "从当次可见证据到用户最终决定，再经结果账本、反事实评估和时间顺序验证形成受治理的规则反馈。"
+  legend: "实线表示事实或事件流；虚线表示数据观察；长虚线表示仅限已批准规则的治理反馈。图标承担语义，颜色仅作辅助。"
+  font:
+    primary: Times New Roman
+    cjk: Times New Roman,SimSun
+    formula: Times New Roman
+
+nodes:
+  - id: decision_phase
+    label: "A  当次决策"
+    type: text
+    bounds: { x: 40, y: 24, width: 208, height: 48 }
+    style: { fontSize: 24, bold: true, align: left }
+
+  - id: evidence
+    label: "证据采集\n截止时点可见"
+    type: document
+    icon: lucide.file-text
+    size: medium
+    position: { x: 96, y: 128 }
+
+  - id: integrity_gate
+    label: "完整性门禁"
+    type: decision
+    icon: lucide.shield
+    size: medium
+    position: { x: 288, y: 128 }
+
+  - id: fact_snapshot
+    label: "事实快照\n原子 generation"
+    type: database
+    icon: lucide.database
+    size: medium
+    position: { x: 480, y: 128 }
+
+  - id: decision_episode
+    label: "决策 episode\n五角色审阅"
+    type: agent
+    icon: lucide.brain-circuit
+    size: medium
+    position: { x: 672, y: 128 }
+
+  - id: delivery
+    label: "送达与留痕\nEMAIL_SENT"
+    type: document
+    icon: mxgraph.networks.mail_server
+    size: medium
+    position: { x: 864, y: 128 }
+
+  - id: user_decision
+    label: "用户决策\n不自动下单"
+    type: user
+    icon: mxgraph.cisco19.user2
+    size: medium
+    position: { x: 1056, y: 128 }
+
+  - id: quarantine
+    label: "FAIL  隔离 / 停止\n保留上一代事实"
+    type: terminal
+    size: large
+    position: { x: 288, y: 336 }
+    style:
+      fillColor: $palette3-fill
+      strokeColor: $palette3-stroke
+      fontColor: $palette3-text
+
+  - id: learning_phase
+    label: "B  事后学习与验证"
+    type: text
+    bounds: { x: 400, y: 432, width: 280, height: 48 }
+    style: { fontSize: 24, bold: true, align: left }
+
+  - id: active_rules
+    label: "生效规则\n≥20 · 可回滚"
+    type: process
+    icon: lucide.shield
+    size: medium
+    position: { x: 288, y: 592 }
+
+  - id: temporal_validation
+    label: "时序验证\n日 / 周 / 月"
+    type: process
+    icon: lucide.alarm-clock
+    size: medium
+    position: { x: 480, y: 592 }
+
+  - id: counterfactual
+    label: "反事实评估\nActual / Hold / Advice"
+    type: process
+    icon: lucide.layers
+    size: medium
+    position: { x: 672, y: 592 }
+
+  - id: outcome_ledger
+    label: "结果账本\n1H · C · D1/D5/D20"
+    type: database
+    icon: mxgraph.mscae.general.graph
+    size: medium
+    position: { x: 864, y: 592 }
+
+  - id: attribution
+    label: "操作归因\n明确确认"
+    type: process
+    icon: lucide.workflow
+    size: medium
+    position: { x: 1056, y: 592 }
+
+  - id: legend
+    label: "实线：事实/事件流    虚线：数据观察    长虚线：受治理反馈\nappend-only · no look-ahead · fail closed · human final decision"
+    type: text
+    bounds: { x: 96, y: 840, width: 1008, height: 64 }
+    style: { fontSize: 16, align: center }
+
+edges:
+  - from: evidence
+    to: integrity_gate
+    type: primary
+
+  - from: integrity_gate
+    to: fact_snapshot
+    type: primary
+    label: PASS
+    labelOffset: { x: 0, y: -24 }
+
+  - from: integrity_gate
+    to: quarantine
+    type: optional
+    label: FAIL
+    labelOffset: { x: 32, y: 0 }
+
+  - from: fact_snapshot
+    to: decision_episode
+    type: primary
+
+  - from: decision_episode
+    to: delivery
+    type: primary
+
+  - from: delivery
+    to: user_decision
+    type: primary
+
+  - from: user_decision
+    to: attribution
+    type: primary
+    label: 明确确认
+    labelOffset: { x: 44, y: 0 }
+
+  - from: delivery
+    to: outcome_ledger
+    type: data
+    label: 可执行参考价
+    labelOffset: { x: 96, y: 0 }
+
+  - from: attribution
+    to: outcome_ledger
+    type: primary
+
+  - from: outcome_ledger
+    to: counterfactual
+    type: primary
+
+  - from: counterfactual
+    to: temporal_validation
+    type: primary
+
+  - from: temporal_validation
+    to: active_rules
+    type: primary
+
+  - from: active_rules
+    to: decision_episode
+    type: feedback
+    label: 仅已批准规则
+    labelOffset: { x: 0, y: -32 }
+    style:
+      dashed: true
+      dashPattern: "10 6"
+    waypoints:
+      - { x: 288, y: 400 }
+      - { x: 672, y: 400 }

@@ -26,7 +26,7 @@
 
 ## 分析和独立审阅
 
-1. 持仓重建成功后，将当前可核验的持仓和 SPY 盘中价格观察通过 `append_outcome_price_bar.py` 追加到 `data/outcome_price_bars.csv`。`bar_at` 必须是实际行情时点，`collected_at` 是采集时点，不得用采集时间冒充行情时间。10:30/11:30/12:30 的观察可作为上一封建议“送达后 1 小时”的候选证据；计算器只接受目标时点前后 15 分钟内最近的 bar，并保留真实 `end_price_at`，不得冒充精确 60 分钟。随后运行 `.venv/bin/python analyze_portfolio.py` 生成事实与风险底稿。
+1. 持仓重建成功后，将当前可核验的持仓和 SPY 盘中价格观察通过 `append_outcome_price_bar.py` 追加到 `data/outcome_price_bars.csv`。盘中结果条只接受已经结束的完整一分钟：`bar_at` 是一分钟区间起点，`collected_at` 不得早于 `bar_at+1分钟`，不得把仍在形成的分钟写入结果账本。分析前观察只作为当时事实，不是建议可执行参考价。后续观察可作为上一封建议“送达后 1 小时”的候选证据；计算器只接受目标时点前后 15 分钟内最近的完整 bar，并保留真实 `end_price_at`，不得冒充精确 60 分钟。随后运行 `.venv/bin/python analyze_portfolio.py` 生成事实与风险底稿。
 2. 严格执行 `daily_portfolio_automation_prompt.md` 的市场、个股、SEC、财报、估值、候选池和输出规则。所有价格写明盘前/盘中/盘后、时间和时区。
 3. 每次实际派生 5 个只读 subagent：`持仓事实核验员`、`公司事实与SEC核验员`、`基本面与买入逻辑分析师`、`估值与预期分析师`、`风控与反方辩手`。把相同事实包发给它们，由主 agent 汇总分歧并仲裁。无法实际派生时停止为 `当前环境无法实际派生 subagent，待确认`。
 4. 动作沿用主提示词允许的枚举，不输出目标价，不承诺收益。若相比上一次报告没有新的成交、公司事实、市场状态或动作变化，明确写 `无新增交易信号，维持上次动作`，避免为了每小时发信而制造交易。
@@ -44,6 +44,7 @@
    - `新开仓机会`：只有候选状态升级或重大新证据时写具体 ticker；否则固定写 `无新增触发`。
    - `待确认与本地报告`。
 4. 发送前若该 decision 已有 `EMAIL_SEND_INTENT` 但没有结果，先在 Gmail Sent 中精确搜索 idempotency_marker：找到时不得重发，直接追加带 Gmail message_id 的 `EMAIL_SENT` 恢复事件；未找到时按 `delivery_unknown` 处理并停止本 slot，不能冒险重复发送。首次发送成功后追加含 message_id 和相同 marker 的 `EMAIL_SENT`；失败时追加含错误和相同 marker 的 `EMAIL_FAILED`。脚本会拒绝孤立发送结果、marker 不一致和同一 decision 的第二次成功发送。
-5. 只有候选升级为 `开仓候选/待确认`、从该状态降级、出现核心逻辑破坏或重大事件时，才额外发送 `[美股候选触发] <ticker> - <状态>` 邮件。候选邮件必须创建独立且确定性的 candidate decision_id，并复用 `DECISION_CREATED -> EMAIL_SEND_INTENT -> EMAIL_SENT/FAILED` outbox 状态机和 Sent marker 恢复流程。正文写清为什么现在、建议动作、等待条件、最强反证、失效条件和待确认项；同一状态和同一证据不得重复发信。
-6. 结尾固定包含：`集中持仓可能带来显著回撤，本结论不承诺收益，不替代个人投资判断。最终决定权在用户。`
-7. 所有本轮路径完成后执行 `.venv/bin/python automation_lock.py release --name intraday --run-id <run_id>`。如果释放失败，记录为运行异常，不重复发送邮件。
+5. `EMAIL_SENT` 成功后，以送达时点向上对齐到下一分钟，等待该一分钟完整结束，为 SPY 和每只持仓追加这一根完成的 `INTRADAY` bar。它是建议结果的唯一可执行参考价；缺失时结果保持 `PENDING_DATA`，不得用 `DECISION_CREATED` 中更早的分析参考价补算。
+6. 只有候选升级为 `开仓候选/待确认`、从该状态降级、出现核心逻辑破坏或重大事件时，才额外发送 `[美股候选触发] <ticker> - <状态>` 邮件。候选邮件必须创建独立且确定性的 candidate decision_id，并复用 `DECISION_CREATED -> EMAIL_SEND_INTENT -> EMAIL_SENT/FAILED` outbox 状态机和 Sent marker 恢复流程。正文写清为什么现在、建议动作、等待条件、最强反证、失效条件和待确认项；同一状态和同一证据不得重复发信。
+7. 结尾固定包含：`集中持仓可能带来显著回撤，本结论不承诺收益，不替代个人投资判断。最终决定权在用户。`
+8. 所有本轮路径完成后执行 `.venv/bin/python automation_lock.py release --name intraday --run-id <run_id>`。如果释放失败，记录为运行异常，不重复发送邮件。

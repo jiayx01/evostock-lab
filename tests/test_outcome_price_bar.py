@@ -69,6 +69,20 @@ class OutcomePriceBarTest(unittest.TestCase):
         with self.assertRaises(PriceBarError):
             normalize(bar)
 
+    def test_intraday_bar_must_be_collected_after_minute_ends(self):
+        bar = self.daily_close_bar()
+        interval_start = XNYS.session_open(pd.Timestamp("2026-07-16")).to_pydatetime()
+        bar.update(
+            {
+                "bar_id": "MSFT-20260716-incomplete",
+                "bar_type": "INTRADAY",
+                "bar_at": interval_start.isoformat(),
+                "collected_at": (interval_start + timedelta(seconds=30)).isoformat(),
+            }
+        )
+        with self.assertRaises(PriceBarError):
+            normalize(bar)
+
     def test_collection_time_cannot_precede_observation(self):
         bar = self.daily_close_bar()
         bar["collected_at"] = (

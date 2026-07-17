@@ -8,10 +8,12 @@ from pathlib import Path
 import exchange_calendars as xcals
 import pandas as pd
 
-from append_outcome_price_bar import normalize as normalize_bar
+from append_outcome_price_bar import BAR_COLUMNS, normalize as normalize_bar
 from calculate_decision_outcomes import (
     ET,
+    OutcomeError,
     build_rows,
+    load_bars,
     load_broker_events,
     load_decisions,
     sha256_inputs,
@@ -62,29 +64,38 @@ class DecisionOutcomeTest(unittest.TestCase):
         return {
             **normalized,
             "bar_at_dt": datetime.fromisoformat(normalized["bar_at"]),
+            "price_at_dt": datetime.fromisoformat(normalized["bar_at"]),
             "collected_at_dt": datetime.fromisoformat(normalized["collected_at"]),
             "close_value": float(normalized["close"]),
         }
 
-    def intraday_bar(self, ticker, bar_at, close):
+    def intraday_raw(self, ticker, bar_at, close, *, bar_id=None, collected_at=None):
         observed = datetime.fromisoformat(bar_at)
-        raw = {
-            "bar_id": f"{ticker}-{observed.isoformat()}-intraday",
+        return {
+            "bar_id": bar_id or f"{ticker}-{observed.isoformat()}-intraday",
             "ticker": ticker,
             "bar_at": observed.isoformat(),
             "session_date": observed.astimezone(ET).date().isoformat(),
             "bar_type": "INTRADAY",
             "close": str(close),
             "source": "test-fixture",
-            "collected_at": (observed + timedelta(minutes=1)).isoformat(),
+            "collected_at": collected_at or (observed + timedelta(minutes=1)).isoformat(),
         }
+
+    def intraday_bar(self, ticker, bar_at, close):
+        raw = self.intraday_raw(ticker, bar_at, close)
         normalized = normalize_bar(raw)
+        interval_start = datetime.fromisoformat(normalized["bar_at"])
         return {
             **normalized,
-            "bar_at_dt": datetime.fromisoformat(normalized["bar_at"]),
+            "bar_at_dt": interval_start,
+            "price_at_dt": interval_start + timedelta(minutes=1),
             "collected_at_dt": datetime.fromisoformat(normalized["collected_at"]),
             "close_value": float(normalized["close"]),
         }
+
+    def execution_reference_bar(self, ticker="MSFT", close=100):
+        return self.intraday_bar(ticker, "2026-07-16T10:30:00-04:00", close)
 
     def delivered_at(self):
         return {"decision-main": datetime.fromisoformat("2026-07-16T10:30:00-04:00")}
@@ -94,6 +105,7 @@ class DecisionOutcomeTest(unittest.TestCase):
 
     def test_close_and_1d_anchor_to_decision_session_not_reference_session(self):
         bars = [
+            self.execution_reference_bar(),
             self.daily_close_bar("SPY", "2026-07-16", 600),
             self.daily_close_bar("SPY", "2026-07-17", 605),
             self.daily_close_bar("MSFT", "2026-07-16", 110),
@@ -126,6 +138,7 @@ class DecisionOutcomeTest(unittest.TestCase):
 
     def test_missing_target_spy_bar_does_not_shift_1d_to_later_session(self):
         bars = [
+            self.execution_reference_bar(),
             self.daily_close_bar("SPY", "2026-07-16", 600),
             self.daily_close_bar("SPY", "2026-07-20", 610),
             self.daily_close_bar("MSFT", "2026-07-17", 110),
@@ -148,8 +161,9 @@ class DecisionOutcomeTest(unittest.TestCase):
 
     def test_one_hour_uses_nearest_bar_within_symmetric_tolerance(self):
         bars = [
-            self.intraday_bar("MSFT", "2026-07-16T11:20:00-04:00", 108),
-            self.intraday_bar("MSFT", "2026-07-16T11:40:00-04:00", 112),
+            self.execution_reference_bar(),
+            self.intraday_bar("MSFT", "2026-07-16T11:19:00-04:00", 108),
+            self.intraday_bar("MSFT", "2026-07-16T11:39:00-04:00", 112),
         ]
         rows = build_rows(
             [self.decision()],
@@ -166,6 +180,128 @@ class DecisionOutcomeTest(unittest.TestCase):
             datetime.fromisoformat(one_hour["end_price_at"]).astimezone(ET).strftime("%H:%M"),
             "11:40",
         )
+
+    def test_missing_post_delivery_reference_is_not_backfilled_from_analysis_price(self):
+        bars = [
+            self.daily_close_bar("SPY", "2026-07-16", 600),
+            self.daily_close_bar("MSFT", "2026-07-16", 110),
+        ]
+        rows = build_rows(
+            [self.decision()],
+            self.delivered_at(),
+            bars,
+            [],
+            datetime.fromisoformat("2026-07-16T17:00:00-04:00"),
+            10.0,
+            "fixture-hash",
+        )
+
+        close = self.find_horizon(rows, "close")
+        self.assertEqual(close["outcome_status"], "PENDING_DATA")
+        self.assertEqual(close["reference_price"], "")
+        self.assertIn("未使用送达前分析参考价", close["notes"])
+
+    def test_reference_uses_first_complete_minute_starting_after_delivery(self):
+        delivered = {"decision-main": datetime.fromisoformat("2026-07-16T10:30:30-04:00")}
+        bars = [
+            self.intraday_bar("MSFT", "2026-07-16T10:30:00-04:00", 99),
+            self.intraday_bar("MSFT", "2026-07-16T10:31:00-04:00", 100),
+            self.daily_close_bar("SPY", "2026-07-16", 600),
+            self.daily_close_bar("MSFT", "2026-07-16", 110),
+        ]
+        rows = build_rows(
+            [self.decision()],
+            delivered,
+            bars,
+            [],
+            datetime.fromisoformat("2026-07-16T17:00:00-04:00"),
+            10.0,
+            "fixture-hash",
+        )
+
+        close = self.find_horizon(rows, "close")
+        self.assertEqual(close["reference_price"], "100.00000000")
+        self.assertEqual(
+            datetime.fromisoformat(close["reference_price_at"]).astimezone(ET).strftime("%H:%M"),
+            "10:32",
+        )
+        self.assertEqual(close["hold_return_pct"], "10.00000000")
+
+    def test_reference_does_not_skip_over_missing_first_post_delivery_minute(self):
+        delivered = {"decision-main": datetime.fromisoformat("2026-07-16T10:30:30-04:00")}
+        bars = [
+            self.intraday_bar("MSFT", "2026-07-16T10:32:00-04:00", 100),
+            self.daily_close_bar("SPY", "2026-07-16", 600),
+            self.daily_close_bar("MSFT", "2026-07-16", 110),
+        ]
+        rows = build_rows(
+            [self.decision()],
+            delivered,
+            bars,
+            [],
+            datetime.fromisoformat("2026-07-16T17:00:00-04:00"),
+            10.0,
+            "fixture-hash",
+        )
+
+        close = self.find_horizon(rows, "close")
+        self.assertEqual(close["outcome_status"], "PENDING_DATA")
+        self.assertEqual(close["reference_price"], "")
+
+    def test_load_bars_ignores_legacy_incomplete_minute_when_final_exists(self):
+        provisional = self.intraday_raw(
+            "MSFT",
+            "2026-07-16T10:36:00-04:00",
+            101,
+            bar_id="MSFT-1036-provisional",
+            collected_at="2026-07-16T10:36:24-04:00",
+        )
+        final = self.intraday_raw(
+            "MSFT",
+            "2026-07-16T10:36:00-04:00",
+            102,
+            bar_id="MSFT-1036-final",
+            collected_at="2026-07-16T10:37:10-04:00",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger = Path(tmp) / "bars.csv"
+            with ledger.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=BAR_COLUMNS)
+                writer.writeheader()
+                writer.writerows([provisional, final])
+            before_final = load_bars(
+                ledger, datetime.fromisoformat("2026-07-16T10:36:30-04:00")
+            )
+            after_final = load_bars(
+                ledger, datetime.fromisoformat("2026-07-16T10:38:00-04:00")
+            )
+
+        self.assertEqual(before_final, [])
+        self.assertEqual([bar["bar_id"] for bar in after_final], ["MSFT-1036-final"])
+
+    def test_load_bars_rejects_conflicting_completed_minutes(self):
+        first = self.intraday_raw(
+            "MSFT",
+            "2026-07-16T10:36:00-04:00",
+            101,
+            bar_id="MSFT-1036-final-a",
+            collected_at="2026-07-16T10:37:10-04:00",
+        )
+        second = self.intraday_raw(
+            "MSFT",
+            "2026-07-16T10:36:00-04:00",
+            102,
+            bar_id="MSFT-1036-final-b",
+            collected_at="2026-07-16T10:38:10-04:00",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger = Path(tmp) / "bars.csv"
+            with ledger.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=BAR_COLUMNS)
+                writer.writeheader()
+                writer.writerows([first, second])
+            with self.assertRaises(OutcomeError):
+                load_bars(ledger, datetime.fromisoformat("2026-07-16T10:39:00-04:00"))
 
     def test_decision_and_email_visibility_are_cut_off_at_as_of(self):
         visible_decision = self.decision()
@@ -281,6 +417,7 @@ class DecisionOutcomeTest(unittest.TestCase):
 
     def test_same_inputs_and_as_of_produce_identical_output_bytes(self):
         bars = [
+            self.execution_reference_bar(),
             self.daily_close_bar("SPY", "2026-07-16", 600),
             self.daily_close_bar("MSFT", "2026-07-16", 110),
         ]

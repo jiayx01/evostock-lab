@@ -1,0 +1,52 @@
+{
+  "name": "evostock-academic",
+  "displayName": "EvoStock Academic Monochrome",
+  "category": "academic",
+  "colorblindSafe": true,
+  "grayscaleSafe": true,
+  "maxCategories": 3,
+  "source": "Project-local palette derived from academic monochrome figure conventions",
+  "venues": ["generic-journal", "cn-thesis", "github-documentation"],
+  "notes": "Black, separated mid-gray, and white; icons, shapes, and line styles remain the primary semantic encoding.",
+  "entries": [
+    {
+      "name": "black",
+      "base": "#000000",
+      "fill": "#000000",
+      "stroke": "#000000",
+      "text": "#000000"
+    },
+    {
+      "name": "mid-gray",
+      "base": "#999999",
+      "fill": "#B0B0B0",
+      "stroke": "#555555",
+      "text": "#000000"
+    },
+    {
+      "name": "white",
+      "base": "#FFFFFF",
+      "fill": "#FFFFFF",
+      "stroke": "#000000",
+      "text": "#000000"
+    }
+  ],
+  "roles": {
+    "service": 1,
+    "database": 1,
+    "decision": 0,
+    "queue": 1,
+    "user": 2,
+    "document": 2,
+    "terminal": 0,
+    "llm": 1,
+    "agent": 0,
+    "vector_store": 1,
+    "memory": 2,
+    "tool": 1,
+    "gateway": 0
+  },
+  "connector": {
+    "default": "#000000"
+  }
+}

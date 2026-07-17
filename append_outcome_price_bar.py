@@ -10,7 +10,7 @@ import json
 import os
 import re
 import sys
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
@@ -32,6 +32,7 @@ BAR_COLUMNS = [
     "collected_at",
 ]
 BAR_TYPES = {"INTRADAY", "DAILY_CLOSE"}
+INTRADAY_INTERVAL = timedelta(minutes=1)
 ID_RE = re.compile(r"^[A-Za-z0-9._:-]{6,200}$")
 TICKER_RE = re.compile(r"^[A-Z][A-Z0-9.-]{0,9}$")
 
@@ -55,7 +56,7 @@ def aware_time(value: Any, field: str) -> str:
     return parse_aware_time(value, field).isoformat()
 
 
-def normalize(value: Any) -> dict[str, str]:
+def normalize(value: Any, *, require_final: bool = True) -> dict[str, str]:
     if not isinstance(value, dict):
         raise PriceBarError("input must be one JSON object")
     bar_id = str(value.get("bar_id") or "").strip()
@@ -84,6 +85,8 @@ def normalize(value: Any) -> dict[str, str]:
     collected_at = parse_aware_time(value.get("collected_at"), "collected_at")
     if collected_at < bar_at:
         raise PriceBarError("collected_at cannot be earlier than bar_at")
+    if bar_type == "INTRADAY" and require_final and collected_at < bar_at + INTRADAY_INTERVAL:
+        raise PriceBarError("INTRADAY bar must be collected after its one-minute interval ends")
 
     calendar = xcals.get_calendar("XNYS")
     session = pd.Timestamp(session_date.isoformat())
@@ -95,7 +98,9 @@ def normalize(value: Any) -> dict[str, str]:
     if bar_type == "DAILY_CLOSE":
         if bar_at_utc != market_close:
             raise PriceBarError("DAILY_CLOSE bar_at must equal the XNYS session close")
-    elif not market_open <= bar_at_utc <= market_close:
+    elif not market_open <= bar_at_utc or (
+        bar_at + INTRADAY_INTERVAL
+    ).astimezone(timezone.utc) > market_close:
         raise PriceBarError("INTRADAY bar_at must fall within the XNYS regular session")
     return {
         "bar_id": bar_id,
