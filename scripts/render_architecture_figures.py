@@ -14,7 +14,7 @@ DIAGRAMS = ROOT / "diagrams"
 ASSETS = ROOT / "assets"
 WORK = ROOT / ".drawio-tmp"
 STEMS = ("evostock-learning-loop", "evostock-memory-architecture")
-PALETTE_SOURCE = DIAGRAMS / "palettes" / "evostock-academic.json"
+PALETTE_SOURCE = DIAGRAMS / "palettes" / "evostock-publication.json"
 PALETTE_TARGET = Path.home() / ".drawio-skill" / "palettes" / PALETTE_SOURCE.name
 
 

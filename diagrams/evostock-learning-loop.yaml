@@ -2,14 +2,15 @@ meta:
   profile: academic-paper
   figureType: workflow
   source: generated
-  theme: academic
-  palette: evostock-academic
+  theme: academic-color
+  palette: evostock-publication
   layout: horizontal
-  canvas: 1200x920
+  canvas: 1660x840
   routing: orthogonal
-  title: "EvoStock Lab 可审计的决策与学习闭环"
-  description: "从当次可见证据到用户最终决定，再经结果账本、反事实评估和时间顺序验证形成受治理的规则反馈。"
-  legend: "实线表示事实或事件流；虚线表示数据观察；长虚线表示仅限已批准规则的治理反馈。图标承担语义，颜色仅作辅助。"
+  print: { widthPt: 830, minPt: 8 }
+  title: "EvoStock Lab 从研究判断到受治理学习的完整闭环"
+  description: "可信事实经过完整性门禁和多角色研究形成条件式建议，用户保留最终决定权；后续结果只有通过验证后才能反馈为生产规则。"
+  legend: "编号表示当次决策主流程；实线表示事实与结果流；虚线表示只有已批准规则才能进入的治理反馈。颜色、图标和文字共同表达语义。"
   font:
     primary: Times New Roman
     cjk: Times New Roman,SimSun
@@ -17,175 +18,134 @@ meta:
 
 nodes:
   - id: decision_phase
-    label: "A  当次决策"
+    label: "A  当次研究与用户决策"
     type: text
-    bounds: { x: 40, y: 24, width: 208, height: 48 }
-    style: { fontSize: 24, bold: true, align: left }
+    bounds: { x: 40, y: 24, width: 320, height: 48 }
+    style: { fontSize: 24, bold: true, align: left, fontColor: $palette1-stroke }
 
   - id: evidence
-    label: "证据采集\n截止时点可见"
-    type: document
-    icon: lucide.file-text
-    size: medium
-    position: { x: 96, y: 128 }
+    label: "01  可信事实\n成交 · 市场 · 公司"
+    type: database
+    size: large
+    position: { x: 140, y: 152 }
+    style: { fillColor: $palette3-fill, strokeColor: $palette3-stroke, fontColor: $palette3-text }
 
   - id: integrity_gate
-    label: "完整性门禁"
+    label: "02  证据门禁\n身份 · 时点 · 来源"
     type: decision
-    icon: lucide.shield
-    size: medium
-    position: { x: 288, y: 128 }
+    size: large
+    position: { x: 400, y: 152 }
+    style: { fillColor: $palette4-fill, strokeColor: $palette4-stroke, fontColor: $palette4-text }
 
-  - id: fact_snapshot
-    label: "事实快照\n原子 generation"
-    type: database
-    icon: lucide.database
-    size: medium
-    position: { x: 480, y: 128 }
-
-  - id: decision_episode
-    label: "决策 episode\n五角色审阅"
+  - id: research
+    label: "03  交叉研究\n趋势 · 估值 · 风险"
     type: agent
-    icon: lucide.brain-circuit
-    size: medium
-    position: { x: 672, y: 128 }
+    size: large
+    position: { x: 680, y: 152 }
+    style: { fillColor: $palette1-fill, strokeColor: $palette1-stroke, fontColor: $palette1-text }
 
-  - id: delivery
-    label: "送达与留痕\nEMAIL_SENT"
+  - id: recommendation
+    label: "04  条件式建议\n动作 · 条件 · 禁止"
     type: document
-    icon: mxgraph.networks.mail_server
-    size: medium
-    position: { x: 864, y: 128 }
+    size: large
+    position: { x: 960, y: 152 }
+    style: { fillColor: $palette2-fill, strokeColor: $palette2-stroke, fontColor: $palette2-text }
 
-  - id: user_decision
-    label: "用户决策\n不自动下单"
+  - id: user_choice
+    label: "05  用户决策\n最终决定权"
     type: user
     icon: mxgraph.cisco19.user2
-    size: medium
-    position: { x: 1056, y: 128 }
-
-  - id: quarantine
-    label: "FAIL  隔离 / 停止\n保留上一代事实"
-    type: terminal
     size: large
-    position: { x: 288, y: 336 }
-    style:
-      fillColor: $palette3-fill
-      strokeColor: $palette3-stroke
-      fontColor: $palette3-text
+    position: { x: 1240, y: 152 }
+    style: { fillColor: $palette4-fill, strokeColor: $palette4-stroke, fontColor: $text }
+
+  - id: action_result
+    label: "06  操作与结果\n留痕 · 不猜因果"
+    type: process
+    icon: mxgraph.mscae.general.graph
+    size: large
+    position: { x: 1520, y: 152 }
+    style: { fillColor: $palette2-fill, strokeColor: $palette2-stroke, fontColor: $text }
+
+  - id: fail_closed
+    label: "证据不足\n停止输出新建议"
+    type: terminal
+    size: medium
+    position: { x: 400, y: 360 }
+    style: { fillColor: $errorLight, strokeColor: $error, fontColor: $text }
 
   - id: learning_phase
-    label: "B  事后学习与验证"
+    label: "B  结果评估与规则学习"
     type: text
-    bounds: { x: 400, y: 432, width: 280, height: 48 }
-    style: { fontSize: 24, bold: true, align: left }
+    bounds: { x: 40, y: 472, width: 320, height: 48 }
+    style: { fontSize: 24, bold: true, align: left, fontColor: $palette1-stroke }
 
-  - id: active_rules
-    label: "生效规则\n≥20 · 可回滚"
+  - id: outcome_evaluation
+    label: "固定窗口评估\n实际 / 持有 / 建议"
     type: process
-    icon: lucide.shield
-    size: medium
-    position: { x: 288, y: 592 }
+    size: large
+    position: { x: 1520, y: 620 }
+    style: { fillColor: $palette3-fill, strokeColor: $palette3-stroke, fontColor: $palette3-text }
+
+  - id: episode_memory
+    label: "案例记忆\n因子 · 环境 · 反证"
+    type: memory
+    size: large
+    position: { x: 1160, y: 620 }
+    style: { fillColor: $palette1-fill, strokeColor: $palette1-stroke, fontColor: $palette1-text }
 
   - id: temporal_validation
-    label: "时序验证\n日 / 周 / 月"
+    label: "时间顺序验证\n样本 · 成本 · 回撤"
     type: process
     icon: lucide.alarm-clock
-    size: medium
-    position: { x: 480, y: 592 }
+    size: large
+    position: { x: 780, y: 620 }
+    style: { fillColor: $palette4-fill, strokeColor: $palette4-stroke, fontColor: $text }
 
-  - id: counterfactual
-    label: "反事实评估\nActual / Hold / Advice"
-    type: process
-    icon: lucide.layers
-    size: medium
-    position: { x: 672, y: 592 }
-
-  - id: outcome_ledger
-    label: "结果账本\n1H · C · D1/D5/D20"
-    type: database
-    icon: mxgraph.mscae.general.graph
-    size: medium
-    position: { x: 864, y: 592 }
-
-  - id: attribution
-    label: "操作归因\n明确确认"
-    type: process
-    icon: lucide.workflow
-    size: medium
-    position: { x: 1056, y: 592 }
+  - id: approved_rules
+    label: "已批准规则\n验证达标 · 可回滚"
+    type: decision
+    icon: lucide.shield
+    size: large
+    position: { x: 440, y: 620 }
+    style: { fillColor: $palette2-fill, strokeColor: $palette2-stroke, fontColor: $text }
 
   - id: legend
-    label: "实线：事实/事件流    虚线：数据观察    长虚线：受治理反馈\nappend-only · no look-ahead · fail closed · human final decision"
+    label: "主流程 → 可信事实到用户决策    学习流 → 结果到规则验证    虚线 ⇢ 仅已批准规则可反馈    不自动下单"
     type: text
-    bounds: { x: 96, y: 840, width: 1008, height: 64 }
+    bounds: { x: 160, y: 790, width: 1340, height: 36 }
     style: { fontSize: 16, align: center }
 
 edges:
-  - from: evidence
-    to: integrity_gate
-    type: primary
+  - { from: evidence, to: integrity_gate, type: primary }
+  - { from: integrity_gate, to: research, type: primary, label: "通过" }
+  - { from: research, to: recommendation, type: primary }
+  - { from: recommendation, to: user_choice, type: primary }
+  - { from: user_choice, to: action_result, type: primary }
 
   - from: integrity_gate
-    to: fact_snapshot
-    type: primary
-    label: PASS
-    labelOffset: { x: 0, y: -24 }
-
-  - from: integrity_gate
-    to: quarantine
+    to: fail_closed
     type: optional
-    label: FAIL
+    label: "不足"
     labelOffset: { x: 32, y: 0 }
+    style: { strokeColor: $error }
 
-  - from: fact_snapshot
-    to: decision_episode
-    type: primary
-
-  - from: decision_episode
-    to: delivery
-    type: primary
-
-  - from: delivery
-    to: user_decision
-    type: primary
-
-  - from: user_decision
-    to: attribution
-    type: primary
-    label: 明确确认
-    labelOffset: { x: 44, y: 0 }
-
-  - from: delivery
-    to: outcome_ledger
+  - from: action_result
+    to: outcome_evaluation
     type: data
-    label: 可执行参考价
-    labelOffset: { x: 96, y: 0 }
 
-  - from: attribution
-    to: outcome_ledger
-    type: primary
+  - { from: outcome_evaluation, to: episode_memory, type: primary }
+  - { from: episode_memory, to: temporal_validation, type: primary }
+  - { from: temporal_validation, to: approved_rules, type: primary }
 
-  - from: outcome_ledger
-    to: counterfactual
-    type: primary
-
-  - from: counterfactual
-    to: temporal_validation
-    type: primary
-
-  - from: temporal_validation
-    to: active_rules
-    type: primary
-
-  - from: active_rules
-    to: decision_episode
+  - from: approved_rules
+    to: research
     type: feedback
-    label: 仅已批准规则
-    labelOffset: { x: 0, y: -32 }
     style:
       dashed: true
       dashPattern: "10 6"
+      strokeColor: $palette1-stroke
     waypoints:
-      - { x: 288, y: 400 }
-      - { x: 672, y: 400 }
+      - { x: 440, y: 448 }
+      - { x: 800, y: 448 }
+      - { x: 800, y: 176 }

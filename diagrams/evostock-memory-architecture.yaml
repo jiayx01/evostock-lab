@@ -2,279 +2,140 @@ meta:
   profile: academic-paper
   figureType: architecture
   source: generated
-  theme: academic
-  palette: evostock-academic
+  theme: academic-color
+  palette: evostock-publication
   layout: horizontal
-  canvas: 1200x1280
+  canvas: 1400x840
   routing: orthogonal
-  title: "EvoStock Lab 持久化记忆的分层与权限边界"
-  description: "权威事件经确定性派生和受治理召回进入下一次决策；候选经验、自动化游标与 Git 代码具有不同权限。"
-  legend: "每一行从权威记录流向派生视图、治理检查和下一次决策上下文；虚线表示候选或可重建状态，不具有直接规则权限。"
+  print: { widthPt: 800, minPt: 8 }
+  title: "EvoStock Lab 持久化记忆如何参与下一次判断"
+  description: "每次决策及其结果形成可检索案例；当前事实始终优先，历史案例只提供上下文，只有通过验证并经用户确认的规则才具备约束力。"
+  legend: "上层是可检索决策记忆，下层是学习与规则治理；实线表示可进入下一次判断的数据流，虚线表示受治理反馈。颜色、图标和文字共同表达语义。"
   font:
     primary: Times New Roman
     cjk: Times New Roman,SimSun
     formula: Times New Roman
 
-modules:
-  - id: canonical
-    label: "不可变事实源"
-
-  - id: derived
-    label: "确定性派生视图"
-
-  - id: governed
-    label: "召回与治理"
-
-  - id: context
-    label: "下一次决策上下文"
-
 nodes:
-  - id: fact_events
-    module: canonical
-    label: "F  事实事件\nBroker · Market · SEC"
+  - id: memory_phase
+    label: "A  可检索决策记忆"
+    type: text
+    bounds: { x: 40, y: 24, width: 300, height: 48 }
+    style: { fontSize: 24, bold: true, align: left, fontColor: $palette1-stroke }
+
+  - id: decision_record
+    label: "决策记录\n事实 · 理由 · 动作"
     type: document
     icon: lucide.file-text
-    size: medium
-    position: { x: 120, y: 128 }
+    size: large
+    position: { x: 120, y: 188 }
+    style: { fillColor: $palette3-fill, strokeColor: $palette3-stroke, fontColor: $text }
 
-  - id: decision_events
-    module: canonical
-    label: "D  决策事件\nepisode · 因子 · 反证"
-    type: document
-    icon: lucide.brain-circuit
-    size: medium
-    position: { x: 120, y: 304 }
-
-  - id: outcome_events
-    module: canonical
-    label: "O  结果事件\n价格窗口 · 数据状态"
+  - id: episode_library
+    label: "案例库\n判断与结果配对"
     type: database
+    size: large
+    position: { x: 380, y: 188 }
+    style: { fillColor: $palette1-fill, strokeColor: $palette1-stroke, fontColor: $palette1-text }
+
+  - id: similar_cases
+    label: "相似案例\n证券 · 因子 · 环境"
+    type: process
+    icon: lucide.search
+    size: large
+    position: { x: 640, y: 188 }
+    style: { fillColor: $palette2-fill, strokeColor: $palette2-stroke, fontColor: $text }
+
+  - id: current_facts
+    label: "当前事实\n始终优先"
+    type: database
+    size: medium
+    position: { x: 940, y: 88 }
+    style: { fillColor: $palette2-fill, strokeColor: $palette2-stroke, fontColor: $palette2-text }
+
+  - id: decision_context
+    label: "决策上下文\n当前事实优先\n历史案例作参考"
+    type: process
+    size: large
+    position: { x: 940, y: 292 }
+    style: { fillColor: $palette4-fill, strokeColor: $palette4-stroke, fontColor: $palette4-text }
+
+  - id: next_decision
+    label: "下一次研究\n重新评估"
+    type: agent
+    icon: lucide.brain-circuit
+    size: large
+    position: { x: 1240, y: 292 }
+    style: { fillColor: $palette1-fill, strokeColor: $palette1-stroke, fontColor: $text }
+
+  - id: governance_phase
+    label: "B  学习与规则治理"
+    type: text
+    bounds: { x: 40, y: 462, width: 300, height: 48 }
+    style: { fontSize: 24, bold: true, align: left, fontColor: $palette2-stroke }
+
+  - id: outcome_evaluation
+    label: "结果评估\n实际 / 持有 / 建议"
+    type: process
     icon: mxgraph.mscae.general.graph
-    size: medium
-    position: { x: 120, y: 480 }
-
-  - id: candidate_rules
-    module: canonical
-    label: "E  候选经验\n证据 · 边界 · 样本"
-    type: document
-    icon: lucide.file-text
-    size: medium
-    position: { x: 120, y: 656 }
-
-  - id: rule_registry
-    module: canonical
-    label: "R  规则版本\n批准 · 回滚 · 哈希"
-    type: database
-    icon: lucide.shield
-    size: medium
-    position: { x: 120, y: 832 }
-
-  - id: fact_package
-    module: derived
-    label: "当前事实包\nas_of · 来源 · 完整性"
-    type: database
-    icon: lucide.database-zap
-    size: medium
-    position: { x: 400, y: 128 }
-
-  - id: episode_index
-    module: derived
-    label: "Episode 索引\nticker · regime · factor"
-    type: process
-    icon: lucide.search
-    size: medium
-    position: { x: 400, y: 304 }
-
-  - id: outcome_matrix
-    module: derived
-    label: "结果矩阵\nactual · hold · counterfactual"
-    type: process
-    icon: lucide.layers
-    size: medium
-    position: { x: 400, y: 480 }
-
-  - id: learning_digest
-    module: derived
-    label: "Learning digest\n相似 · 失败 · 待验证"
-    type: memory
-    icon: lucide.brain-circuit
-    size: medium
-    position: { x: 400, y: 656 }
-
-  - id: active_bundle
-    module: derived
-    label: "生效规则\n仅批准版本"
-    type: database
-    icon: lucide.shield
-    size: medium
-    position: { x: 400, y: 832 }
-
-  - id: fact_gate
-    module: governed
-    label: "事实门禁\n缺失 / 冲突 / 未来 → stop"
-    type: decision
-    icon: lucide.shield
-    size: medium
-    position: { x: 680, y: 128 }
-
-  - id: episode_recall
-    module: governed
-    label: "相似召回\n仅成熟结果"
-    type: process
-    icon: lucide.search
-    size: medium
-    position: { x: 680, y: 304 }
-
-  - id: comparability
-    module: governed
-    label: "可比性检查\n样本 · 成本 · 市场分层"
-    type: decision
-    icon: lucide.layers
-    size: medium
-    position: { x: 680, y: 480 }
-
-  - id: candidate_context
-    module: governed
-    label: "候选经验\n只作上下文 · 不改动作"
-    type: memory
-    icon: lucide.brain-circuit
-    size: medium
-    position: { x: 680, y: 656 }
-
-  - id: rule_gate
-    module: governed
-    label: "规则约束\n≥20 样本\n用户确认"
-    type: decision
-    icon: lucide.shield
-    size: medium
-    position: { x: 680, y: 832 }
-
-  - id: binding_facts
-    module: context
-    label: "BINDING\n当前事实 + 完整性门禁"
-    type: memory
-    icon: lucide.database
-    size: medium
-    position: { x: 1000, y: 128 }
-
-  - id: mature_context
-    module: context
-    label: "CONTEXT\n成熟案例 + 失败反证"
-    type: memory
-    icon: lucide.search
-    size: medium
-    position: { x: 1000, y: 304 }
-
-  - id: comparable_context
-    module: context
-    label: "CONTEXT\n可比结果 + 市场分层"
-    type: memory
-    icon: lucide.layers
-    size: medium
-    position: { x: 1000, y: 480 }
-
-  - id: hypothesis_context
-    module: context
-    label: "CONTEXT ONLY\n候选经验 · 无规则权限"
-    type: memory
-    icon: lucide.brain-circuit
-    size: medium
-    position: { x: 1000, y: 656 }
-
-  - id: binding_rules
-    module: context
-    label: "BINDING\n生效规则 + 内容哈希"
-    type: memory
-    icon: lucide.shield
-    size: medium
-    position: { x: 1000, y: 832 }
-
-  - id: durable_storage
-    label: "EVOSTOCK_DATA_DIR\n加密 manifest · 可回放"
-    type: database
-    icon: lucide.database
     size: large
-    position: { x: 208, y: 1080 }
+    position: { x: 380, y: 620 }
+    style: { fillColor: $palette3-fill, strokeColor: $palette3-stroke, fontColor: $text }
 
-  - id: automation_memory
-    label: "运行记忆\n游标/重试\n可重建"
+  - id: candidate_insight
+    label: "候选经验\n正反案例都保留"
     type: memory
-    icon: lucide.server-cog
     size: large
-    position: { x: 600, y: 1080 }
+    position: { x: 640, y: 620 }
+    style: { fillColor: $palette1-fill, strokeColor: $palette1-stroke, fontColor: $palette1-text }
 
-  - id: git_repository
-    label: "Git / GitHub\n代码/规则\n私有事件不入库"
-    type: document
-    icon: mxgraph.azure.github_code
+  - id: rule_validation
+    label: "验证门禁\n样本 · 成本 · 回撤"
+    type: decision
     size: large
-    position: { x: 992, y: 1080 }
+    position: { x: 900, y: 620 }
+    style: { fillColor: $palette4-fill, strokeColor: $palette4-stroke, fontColor: $palette4-text }
+
+  - id: approved_rules
+    label: "已批准规则\n达标 + 用户确认"
+    type: process
+    size: large
+    position: { x: 1160, y: 620 }
+    style: { fillColor: $palette2-fill, strokeColor: $palette2-stroke, fontColor: $palette2-text }
 
   - id: exclusions
-    label: "EXCLUDED  未来数据 · 未成熟结果 · 未批准规则"
+    label: "未成熟结果 · 不可比案例 · 未批准经验  →  不直接改变动作"
     type: text
-    bounds: { x: 744, y: 976, width: 400, height: 40 }
-    style:
-      fontSize: 16
-      bold: true
-      align: center
-      fontColor: $palette3-text
-
-  - id: legend
-    label: "图例  实线 → 可进入决策的受控数据流    虚线 ⇢ 候选或可重建状态    每一行均以 knowledge cutoff 为边界"
-    type: text
-    bounds: { x: 140, y: 1224, width: 920, height: 40 }
-    style: { fontSize: 16, align: center }
-
-  - id: canonical_spacer
-    module: canonical
-    label: " "
-    type: text
-    bounds: { x: 112, y: 920, width: 16, height: 32 }
-    style: { fontColor: "#FFFFFF" }
-
-  - id: derived_spacer
-    module: derived
-    label: " "
-    type: text
-    bounds: { x: 392, y: 920, width: 16, height: 32 }
-    style: { fontColor: "#FFFFFF" }
-
-  - id: governed_spacer
-    module: governed
-    label: " "
-    type: text
-    bounds: { x: 672, y: 920, width: 16, height: 32 }
-    style: { fontColor: "#FFFFFF" }
-
-  - id: context_spacer
-    module: context
-    label: " "
-    type: text
-    bounds: { x: 992, y: 920, width: 16, height: 32 }
-    style: { fontColor: "#FFFFFF" }
+    bounds: { x: 500, y: 780, width: 640, height: 36 }
+    style: { fontSize: 16, bold: true, align: center, fontColor: $error }
 
 edges:
-  - { from: fact_events, to: fact_package, type: data }
-  - { from: fact_package, to: fact_gate, type: primary }
-  - { from: fact_gate, to: binding_facts, type: primary }
+  - { from: decision_record, to: episode_library, type: data }
+  - { from: episode_library, to: similar_cases, type: memory_read }
+  - from: similar_cases
+    to: decision_context
+    type: memory_read
 
-  - { from: decision_events, to: episode_index, type: data }
-  - { from: episode_index, to: episode_recall, type: memory_read }
-  - { from: episode_recall, to: mature_context, type: memory_read }
+  - from: current_facts
+    to: decision_context
+    type: primary
+  - { from: decision_context, to: next_decision, type: primary }
 
-  - { from: outcome_events, to: outcome_matrix, type: data }
-  - { from: outcome_matrix, to: comparability, type: primary }
-  - { from: comparability, to: comparable_context, type: primary }
-
-  - { from: candidate_rules, to: learning_digest, type: memory_write }
-  - { from: learning_digest, to: candidate_context, type: optional }
-  - { from: candidate_context, to: hypothesis_context, type: optional }
-
-  - { from: rule_registry, to: active_bundle, type: data }
-  - { from: active_bundle, to: rule_gate, type: primary }
-  - { from: rule_gate, to: binding_rules, type: primary }
-
-  - from: rule_registry
-    to: durable_storage
+  - from: outcome_evaluation
+    to: episode_library
     type: data
+
+  - { from: outcome_evaluation, to: candidate_insight, type: memory_write }
+  - { from: candidate_insight, to: rule_validation, type: primary }
+  - { from: rule_validation, to: approved_rules, type: primary }
+
+  - from: approved_rules
+    to: decision_context
+    type: feedback
+    style:
+      dashed: true
+      dashPattern: "10 6"
+      strokeColor: $palette2-stroke
+    waypoints:
+      - { x: 1160, y: 460 }
+      - { x: 940, y: 460 }
