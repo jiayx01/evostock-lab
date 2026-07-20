@@ -4,9 +4,10 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import random
 import warnings
 from dataclasses import dataclass
-from datetime import datetime, time
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -263,6 +264,107 @@ def download_prices(
         ticker: keep_completed_daily_bars(frame, effective_now)
         for ticker, frame in frames.items()
     }
+
+
+EXAMPLE_DEMO_HOLDINGS = "examples/demo_portfolio.csv"
+DEMO_BANNER = (
+    "> **DEMO MODE — synthetic data.**\n"
+    "> Positions and prices below are generated locally from a fixed seed. They are\n"
+    "> not market data, not a real portfolio, and not investment advice. This run\n"
+    "> exists to show what the analysis pipeline produces end to end.\n"
+    "> Run without `--demo` to analyse your own verified holdings.\n\n"
+)
+
+DEMO_MARKET_VOL = 0.0079
+# ticker -> (closing price on the final synthetic session, beta to SPY,
+#            idiosyncratic daily vol, annualised drift)
+DEMO_SERIES = {
+    "SPY": (592.41, 1.00, 0.0000, 0.09),
+    "QQQ": (511.68, 1.12, 0.0036, 0.13),
+    "IWM": (221.34, 1.06, 0.0055, 0.04),
+    "SMH": (257.83, 1.44, 0.0090, 0.18),
+    "SOXX": (237.62, 1.41, 0.0088, 0.17),
+    "IGV": (98.76, 1.17, 0.0064, 0.11),
+    "RSP": (179.45, 0.92, 0.0029, 0.06),
+    "HYG": (79.38, 0.27, 0.0022, 0.03),
+    "IEF": (95.24, -0.06, 0.0025, 0.02),
+    "^VIX": (16.47, -6.40, 0.0380, 0.00),
+    "MSFT": (423.86, 1.04, 0.0091, 0.12),
+    "NVDA": (141.72, 1.61, 0.0166, 0.22),
+    "AVGO": (230.44, 1.34, 0.0129, 0.19),
+    "GOOGL": (175.63, 1.01, 0.0104, 0.10),
+}
+
+
+def demo_series_params(ticker: str) -> tuple[float, float, float, float]:
+    if ticker in DEMO_SERIES:
+        return DEMO_SERIES[ticker]
+    rng = random.Random(f"evostock-demo-params:{ticker}")
+    return (
+        round(rng.uniform(45.0, 380.0), 2),
+        round(rng.uniform(0.85, 1.55), 2),
+        round(rng.uniform(0.009, 0.019), 4),
+        round(rng.uniform(0.02, 0.20), 3),
+    )
+
+
+def demo_price_frames(
+    tickers: list[str], sessions: int = 320, anchor: date | None = None
+) -> dict[str, pd.DataFrame]:
+    """Deterministic synthetic daily bars, so ``--demo`` needs no network.
+
+    A single seeded market factor drives every series through a per-ticker
+    beta, so cross-sectional readings (relative strength, breadth, a VIX that
+    rises when the market falls) stay internally consistent instead of being
+    independent noise. Each path is then rescaled to a fixed closing price, so
+    the same run produces the same numbers on every machine.
+
+    These are not market prices and must never be read as one. They exist to
+    exercise the analysis pipeline end to end without a network round trip.
+    """
+    unique = sorted({t for t in tickers if t and t != "CASH"})
+    if not unique:
+        return {}
+
+    last_session = (anchor or datetime.now(ET).date()) - timedelta(days=1)
+    index = pd.bdate_range(end=pd.Timestamp(last_session), periods=sessions)
+
+    market_rng = random.Random("evostock-demo:market-factor")
+    market = [market_rng.gauss(0.0, DEMO_MARKET_VOL) for _ in range(sessions)]
+
+    frames: dict[str, pd.DataFrame] = {}
+    for ticker in unique:
+        last_price, beta, idio_vol, drift = demo_series_params(ticker)
+        rng = random.Random(f"evostock-demo:{ticker}")
+        daily_drift = drift / 252.0
+
+        path = [1.0]
+        for i in range(sessions):
+            step = daily_drift + beta * market[i] + rng.gauss(0.0, idio_vol)
+            if ticker == "^VIX":  # pull VIX back toward its long-run level
+                step += 0.045 * (1.0 - path[-1])
+            path.append(max(path[-1] * (1.0 + step), 1e-6))
+        path = path[1:]
+
+        scale = last_price / path[-1]
+        closes = [round(value * scale, 4) for value in path]
+
+        rows = []
+        for close in closes:
+            spread = close * rng.uniform(0.003, 0.014)
+            open_ = round(close * (1.0 + rng.gauss(0.0, 0.0035)), 4)
+            rows.append(
+                {
+                    "Open": open_,
+                    "High": round(max(open_, close) + spread * rng.random(), 4),
+                    "Low": round(min(open_, close) - spread * rng.random(), 4),
+                    "Close": close,
+                    "Volume": float(int(rng.uniform(8e5, 4.5e7))),
+                }
+            )
+        frames[ticker] = pd.DataFrame(rows, index=index)
+
+    return frames
 
 
 def total_return(close: pd.Series, days: int) -> float | None:
@@ -1148,7 +1250,26 @@ def main() -> None:
     parser.add_argument("--commit-manifest", default=data_path("holdings_commit_manifest.json"))
     parser.add_argument("--skip-commit-verify", action="store_true")
     parser.add_argument("--skip-snapshot-log", action="store_true")
+    parser.add_argument(
+        "--demo",
+        action="store_true",
+        help=(
+            "Run the full analysis on a synthetic portfolio with deterministic "
+            "offline prices. No network, no private data, no configuration."
+        ),
+    )
     args = parser.parse_args()
+
+    if args.demo:
+        args.skip_commit_verify = True
+        args.skip_snapshot_log = True
+        if args.holdings == data_path("holdings_current.csv"):
+            args.holdings = str(Path(__file__).resolve().parent / EXAMPLE_DEMO_HOLDINGS)
+        # Point the optional inputs at a demo-only directory so a bootstrapped
+        # private watchlist can never leak into a demo run.
+        demo_inputs = Path(args.output_dir) / "demo"
+        for unset in ("analysis_overlay", "watchlist", "candidate_watchlist"):
+            setattr(args, unset, str(demo_inputs / f"{unset}.csv"))
 
     logical_holdings_path = Path(args.holdings)
     holdings_path = logical_holdings_path
@@ -1180,10 +1301,13 @@ def main() -> None:
         broker_manifest = None
         broker_events_path = Path(data_path("broker_events.csv"))
 
-    try:
-        validate_candidate_watchlist(candidate_state_log_path, candidate_watchlist_path)
-    except (OSError, CandidateEventError) as exc:
-        raise SystemExit(f"candidate state verification failed: {exc}") from exc
+    if not args.demo:
+        # A demo run has no candidate ledger to reconcile against, so there is
+        # nothing for this gate to verify.
+        try:
+            validate_candidate_watchlist(candidate_state_log_path, candidate_watchlist_path)
+        except (OSError, CandidateEventError) as exc:
+            raise SystemExit(f"candidate state verification failed: {exc}") from exc
 
     overlay_files = (
         analysis_overlay_path,
@@ -1195,7 +1319,12 @@ def main() -> None:
         raise SystemExit("analysis overlay verification failed: overlay files are incomplete")
 
     holdings = read_table(holdings_path)
-    args.holdings_source_note = f"券商派生持仓 `{logical_holdings_path}`"
+    if args.demo:
+        args.holdings_source_note = (
+            f"DEMO：合成组合 `{EXAMPLE_DEMO_HOLDINGS}` 与本地确定性行情，非真实持仓与行情"
+        )
+    else:
+        args.holdings_source_note = f"券商派生持仓 `{logical_holdings_path}`"
     if present_overlay_files:
         try:
             overlay_audit = verify_overlay(
@@ -1249,7 +1378,7 @@ def main() -> None:
     tickers.extend(BENCHMARKS)
     tickers = sorted({t for t in tickers if t})
 
-    frames = download_prices(tickers, args.period)
+    frames = demo_price_frames(tickers) if args.demo else download_prices(tickers, args.period)
     spy_close = frames.get("SPY", pd.DataFrame()).get("Close") if "SPY" in frames else None
     metrics = {ticker: build_metrics(ticker, frame, spy_close) for ticker, frame in frames.items()}
 
@@ -1261,10 +1390,16 @@ def main() -> None:
     report = build_report(
         holdings, watchlist, opening_universe, candidate_watchlist, metrics, args
     )
+    if args.demo:
+        report = DEMO_BANNER + report
     stamp = datetime.now().strftime("%Y%m%d_%H%M")
     output_path = output_dir / f"portfolio_brief_{stamp}.md"
     output_path.write_text(report, encoding="utf-8")
-    print(output_path)
+    if args.demo:
+        print(report)
+        print(f"\n---\nFull brief written to {output_path}")
+    else:
+        print(output_path)
 
 
 if __name__ == "__main__":
