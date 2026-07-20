@@ -7,15 +7,15 @@
 1. 先读取本文件、`data/holdings_commit_manifest.json` 指向的不可变 broker generation、`data/decision_log.jsonl`、`data/outcome_price_bars.csv`、`data/decision_outcomes.csv`、`config/candidate_selection_policy.md`、`data/candidate_watchlist.csv`、`data/candidate_state_log.jsonl`、`experience/approved_rules.md` 和相关自动化 memory。若环境安装了关联的持仓复盘 skill，可作为补充；未安装时以本仓库规则为准。
 2. 从 `data/broker_email_profile.json` 读取 `target_account`，Gmail `get_profile("me")` 必须与其完全一致。账号不符时停止，不读邮件、不改持仓、不发信。
 3. 核对最新已完成的美国常规交易日。交易所休市或数据尚未形成一致收盘快照时，延后为待确认，不用盘中价冒充收盘价。
-4. 生成唯一 run_id 并执行 `.venv/bin/python automation_lock.py acquire --name post-close --run-id <run_id> --stale-minutes 75`。返回 `BUSY` 时跳过；获得锁后必须在所有成功或失败出口执行同一 run_id 的 `release`。
-5. 重扫最近 30 天已确认发件人的 ZA Bank 邮件并翻完分页。按 `broker_sync_batch_template.json` 生成同一批次，只调用 `.venv/bin/python commit_broker_sync_batch.py --input <batch.json>`；不得分别写 message index、events、quarantine 或 sync state。返回 `BLOCKED` 时成功水位不前移，不得评价用户操作。
+4. 生成唯一 run_id 并执行 `<runtime-python> automation_lock.py acquire --name post-close --run-id <run_id> --stale-minutes 75`。返回 `BUSY` 时跳过；获得锁后必须在所有成功或失败出口执行同一 run_id 的 `release`。
+5. 重扫最近 30 天已确认发件人的 ZA Bank 邮件并翻完分页。按 `broker_sync_batch_template.json` 生成同一批次，只调用 `<runtime-python> commit_broker_sync_batch.py --input <batch.json>`；不得分别写 message index、events、quarantine 或 sync state。返回 `BLOCKED` 时成功水位不前移，不得评价用户操作。
 
 ## 复盘计算
 
 1. 收盘数据稳定后，为持仓和 SPY 逐只追加 `DAILY_CLOSE` 价格条；`bar_at` 必须精确等于 XNYS 当日收盘时点，`session_date`、来源和采集时间必须留档。然后用显式知识截止时间运行：
 
 ```bash
-.venv/bin/python calculate_decision_outcomes.py --as-of <ISO-8601时间及时区>
+<runtime-python> calculate_decision_outcomes.py --as-of <ISO-8601时间及时区>
 ```
 
 计算器用 XNYS 正式交易日历从邮件实际送达所在的决策交易日派生收盘、1/5/20 日窗口，不使用参考价日期，也不用现有 SPY bar 列表冒充日历。目标日 SPY 或个股 bar 缺失时保持 `PENDING_DATA`，不得顺延到下一根。
@@ -40,4 +40,4 @@
 
 结尾固定包含：`集中持仓可能带来显著回撤，本结论不承诺收益，不替代个人投资判断。`
 
-最后执行 `.venv/bin/python automation_lock.py release --name post-close --run-id <run_id>`；释放失败要留痕，不重复发信。
+最后执行 `<runtime-python> automation_lock.py release --name post-close --run-id <run_id>`；释放失败要留痕，不重复发信。

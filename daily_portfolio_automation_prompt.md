@@ -1,11 +1,11 @@
 # 每日美股集中持仓复盘自动化提示词
 
-目标：基于用户最新明确聊天校正、其后已核验的 ZA Bank 成交邮件和当天最新市场数据，生成一份审慎、可复核的美股集中持仓复盘。用户总共只买 1-2 只股票，所以默认少交易、重证据；买卖判断优先看市场环境、个股事实、趋势、估值预期和已核验风险，不把持仓数量、市值或仓位字段作为默认动作触发器。
+目标：基于已核验的 Gmail 券商成交账本、由账本确定性重建的持仓和当天最新市场数据，生成一份审慎、可复核的美股集中持仓复盘。系统面向低频、集中持仓场景，默认少交易、重证据；买卖判断优先看市场环境、个股事实、趋势、估值预期和已核验风险，不把持仓数量、市值或仓位字段作为默认动作触发器。
 
 ## 固定路径
 
 - 工作目录：仓库根目录；私有运行数据默认位于 `data/`，可用 `EVOSTOCK_DATA_DIR` 覆盖
-- 持仓来源优先级：用户最新明确聊天校正 > 校正时点之后已核验的 ZA Bank 成交执行 > 本地派生持仓
+- 持仓来源优先级：已核验 Gmail 成交执行或有邮件证据的持仓锚点 > 确定性派生持仓 > 独立且标记待确认的聊天分析 overlay
 - Gmail 目标账号：读取 `data/broker_email_profile.json` 的 `target_account`；每次读信和发信前都必须用 `get_profile("me")` 精确核验
 - 券商邮件配置：`data/broker_email_profile.json`
 - 只追加成交账本：`data/broker_events.csv`
@@ -25,29 +25,29 @@
 - 候选状态日志：`data/candidate_state_log.jsonl`
 - 观察池文件：`data/watchlist_current.csv`
 - 分析脚本：`analyze_portfolio.py`
-- Python 环境：`.venv/bin/python`
+- Python 环境：读取 `data/deployment.json.runtime_python`；未部署插件时使用当前项目虚拟环境
 - 输出目录：`data/reports/`
 
 ## 每次运行流程
 
 1. 先读取自动化记忆、`data/broker_email_profile.json`、`data/broker_events.csv` 和 `data/holdings_current.csv`。
-2. 若当前会话有新的明确持仓校正，先判断字段是否足以建立精确账本锚点。只有精确时间、时区、股数和成本齐全时才能进入 `EXACT_USER_ANCHOR` 审核；任一关键字段不完整时，用 `apply_chat_holdings_overlay.py` 提交一个完整 ticker 集合替换的 analysis overlay。未提供字段保留空值，不从券商或旧持仓继承；overlay 不改写券商账本或 `data/holdings_current.csv`，也不得冒充 `EXACT_USER_ANCHOR`。用户明确已清仓时用空 `holdings` 集合覆盖旧持仓。
+2. 若当前会话有新的明确持仓校正，只能用 `apply_chat_holdings_overlay.py` 提交一个完整 ticker 集合替换的 analysis overlay。未提供字段保留空值，不从券商或旧持仓继承；overlay 不改写券商账本或 `data/holdings_current.csv`，也不得冒充生产持仓锚点。生产锚点必须来自完成全量邮箱核验后的 `VERIFIED_POSITION_ANCHOR` 并保留证据 message ID。
 3. 邮件持仓流程必须先执行 `intraday_portfolio_automation_prompt.md` 的账号、模板、分页和成交状态门禁。将同一封邮件的 message metadata、index 状态、标准化 events 和 quarantine 同时放入一个批次 JSON，只调用 `commit_broker_sync_batch.py`。脚本从合并后账本重建持仓，将 index、events、quarantine、sync waterline、holdings 和 audit 写入同一个不可变 generation，最后仅原子切换一个指针。不得再分别手改 CSV 和 `data/broker_sync_state.json`。
 4. 邮件身份或完整性检查失败时，保留上一次持仓文件但禁止给出新的买卖建议；只报告解析异常和待确认项。当前会话、本地持仓和已核验账本都没有可用 ticker 时，输出“未发现持仓 ticker，无法分析”。
 5. 截图不再是每日必需输入。只有用户主动提供截图时才运行 `find_latest_holding_image.py` 并做补充核验；没有截图时正常继续，不要输出“截图缺失”警告。截图与更新更晚的聊天或成交事件冲突时，以时间更晚且已核验的来源为准并标记冲突。
-6. 报告必须写明持仓来源和最后更新时间，例如“用户聊天校正：2026-07-14 19:29 CST；其后成交邮件截至：待确认”；持仓数量、市值、仓位占比和总盈亏只作为事实记录，不影响买卖动作判断。
+6. 报告必须写明持仓来源、成交邮件覆盖截止点、当前 broker generation 和可选 overlay 时间；持仓数量、市值、仓位占比和总盈亏只作为事实记录，不影响买卖动作判断。
 7. 读取 `config/candidate_selection_policy.md`、`data/candidate_watchlist.csv` 和 `data/candidate_state_log.jsonl`，对最多 5 只持久候选做全维或增量审阅。`config/opening_universe.csv` 的量化 Top 3 只作为发现线索，不能直接写成开仓建议；必须先进入候选漏斗并完成事实、估值、事件与风险门禁。
 8. 读取 `data/watchlist_current.csv`。这是用户主动关注的补充观察池；若为空，直接写“无”。
 9. 运行分析脚本生成事实与风险底稿。脚本会先校验 manifest 指向的不可变 broker generation，直接从该代读持仓，并校验 `data/candidate_watchlist.csv` 与 `data/candidate_state_log.jsonl` 的状态一致性。任一哈希失配或最新 sync 为 `BLOCKED` 时停止方向性建议。ACTIVE overlay 若存在校正后的已核验持仓事件，不得静默合并未知股数，必须停止并要求刷新或清除 overlay。量化表只使用已完成日线：
 
 ```bash
-.venv/bin/python analyze_portfolio.py
+<runtime-python> analyze_portfolio.py
 ```
 
 10. 先补充当天市场环境和大盘热度，再对真实持仓和持久候选逐只补充当天最新事实。市场环境必须至少覆盖 SPY、QQQ、IWM、SMH 或 SOXX、IGV、VIX；市场热度必须补充 RSP 相对 SPY 的市场广度、HYG 相对 IEF 的信用风险偏好，并给出“过热 / 偏热 / 中性偏热 / 中性 / 偏冷 / 风险规避”结论。热度只作为上下文，不得单独触发买卖。个股事实包括价格变化、盘后变化、成交量、行业表现、财报日期、重大新闻、SEC 文件或公司公告。外部事实必须标注来源和日期；不确定写“待确认”。
 11. 必须实际派生 subagent 做独立判断；不要只在同一报告内模拟角色。若当前环境没有可用 subagent 工具，必须停止并输出“当前环境无法实际派生 subagent，待确认”，不得退化成主 agent 角色扮演，也不得假装已派生。
-12. subagent 派生时机：主 agent 完成邮件持仓门禁、可选截图核验、`data/holdings_current.csv` 写入、`.venv/bin/python analyze_portfolio.py` 底稿、当天行情/SEC/财报/新闻初步事实后，再把同一份事实包发给各 subagent。事实包至少包含：
-   - 当前持仓来源、聊天更新时间，以及聊天提供和 `待确认` 的字段。
+12. subagent 派生时机：主 agent 完成邮件持仓门禁、可选截图核验、`data/holdings_current.csv` 写入、`<runtime-python> analyze_portfolio.py` 底稿、当天行情/SEC/财报/新闻初步事实后，再把同一份事实包发给各 subagent。事实包至少包含：
+   - 当前 broker generation、邮件覆盖截止点、可选 overlay 时间和 `待确认` 字段。
    - 若用户主动提供截图，再附截图文件名、修改时间和提取字段。
    - `data/holdings_current.csv` 当前内容。
    - 分析脚本生成的报告路径和关键量化表。
@@ -76,7 +76,7 @@
    - 暂不推荐开仓
 18. 规则优先级：
    - 一般公司字段不完整不阻断事实分析；但持仓 manifest、候选状态或关键市场行情完整性失败时必须 fail closed，不得输出新的方向性动作。
-   - 用户最新明确聊天校正是持仓最高优先级来源；只应用校正时点之后已核验的成交，旧截图、旧邮件和旧持仓不得覆盖新聊天状态。
+   - 已核验 Gmail 成交执行或有邮件证据的持仓锚点是生产持仓最高优先级来源；聊天校正只形成独立 overlay，不能覆盖或改写券商账本。
    - 持仓数量、市值、仓位占比和总盈亏不影响买卖动作判断；它们只用于事实记录和账户快照。无股数/市值则不写入账户快照回撤样本。
    - 缺失字段只限制对应指标：无成本则成本回撤/止损线写“待确认”；无持仓数量/市值/仓位则相关账户字段写“待确认”，但不得因此禁止加仓、强行减仓或自动降级为提高警戒。
    - 风控官判断“必须降风险”时，不允许加仓。
@@ -92,8 +92,8 @@
 1. 今日主结论：是否需要交易，若不交易说明为什么。
 2. 给用户的可执行建议：逐只写“主建议 / 满足什么条件再行动 / 当前不要做什么”，明确最终决定权在用户。
 3. 市场环境与大盘热度：SPY、QQQ、IWM、SMH/SOXX、IGV、RSP/SPY、HYG/IEF、VIX 的简短结论，以及市场是否支持持有、加仓、减仓或开仓。
-4. 当前持仓来源、最后聊天校正时间和成交邮件截止时间；只有实际使用截图时才写截图文件名和修改时间。
-5. 用户聊天校正、已核验成交或当前 CSV 中的持仓字段；未提供的写“待确认”，但持仓数量、市值、仓位字段不得影响动作判断。
+4. 当前持仓来源、broker generation、成交邮件截止时间和可选 overlay 时间；只有实际使用截图时才写截图文件名和修改时间。
+5. 已核验成交或当前派生持仓字段；overlay 与账本冲突时写“待确认”并停止静默合并，但持仓数量、市值、仓位字段不得单独触发买卖动作。
 6. 持仓逐只复核：行情、相对大盘/行业、买入逻辑是否仍成立、今日新增证据、风险等级。
 7. 量化回撤与尾部风险：成本回撤、距一年高点回撤、60 日最大回撤、一年最大回撤、30 日年化波动、95% 单日 VaR/CVaR。
 8. 触发条件检查：卖出、减仓、观望、现有持仓加仓是否触发；不得把“持仓多少/仓位多少”作为默认触发原因。

@@ -1,0 +1,41 @@
+{
+  "name": "evostock-lab",
+  "version": "0.2.0",
+  "description": "Gmail-backed, scheduled portfolio research with auditable memory and gated rule evolution.",
+  "author": {
+    "name": "jiayx01",
+    "url": "https://github.com/jiayx01"
+  },
+  "homepage": "https://github.com/jiayx01/evostock-lab",
+  "repository": "https://github.com/jiayx01/evostock-lab",
+  "license": "MIT",
+  "keywords": [
+    "portfolio",
+    "gmail",
+    "automation",
+    "decision-memory",
+    "stock-research"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "EvoStock Lab",
+    "shortDescription": "Auditable Gmail-backed portfolio automation",
+    "longDescription": "Deploy a local scheduled portfolio-research loop that rebuilds holdings from verified broker emails, records every decision, settles outcomes without future leakage, and promotes rules only after evidence and user approval.",
+    "developerName": "jiayx01",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write",
+      "Scheduled workflows"
+    ],
+    "websiteURL": "https://github.com/jiayx01/evostock-lab",
+    "privacyPolicyURL": "https://github.com/jiayx01/evostock-lab/blob/main/SECURITY.md",
+    "termsOfServiceURL": "https://github.com/jiayx01/evostock-lab/blob/main/LICENSE",
+    "defaultPrompt": [
+      "Set up my Gmail-backed EvoStock automation.",
+      "Show my EvoStock deployment status.",
+      "Review which learned rules are eligible for approval."
+    ],
+    "brandColor": "#167D68"
+  }
+}

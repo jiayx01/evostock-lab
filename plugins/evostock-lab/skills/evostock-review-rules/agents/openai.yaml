@@ -1,0 +1,4 @@
+interface:
+  display_name: "EvoStock Rule Review"
+  short_description: "Review evidence before promoting learned rules"
+  default_prompt: "Use $evostock-review-rules to review candidate rules and their evidence."

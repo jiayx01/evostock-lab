@@ -1,0 +1,20 @@
+{
+  "name": "evostock",
+  "interface": {
+    "displayName": "EvoStock"
+  },
+  "plugins": [
+    {
+      "name": "evostock-lab",
+      "source": {
+        "source": "local",
+        "path": "./plugins/evostock-lab"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

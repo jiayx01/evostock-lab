@@ -1,0 +1,4 @@
+interface:
+  display_name: "EvoStock Status"
+  short_description: "Check automation health, gates, and deployment state"
+  default_prompt: "Use $evostock-status to diagnose my EvoStock automation."

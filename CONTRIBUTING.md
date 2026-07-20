@@ -12,5 +12,8 @@ Contributions should preserve the project's evidence-first boundaries:
 Before opening a pull request, run:
 
 ```bash
+python scripts/validate_distribution.py
 python -m unittest discover -s tests -v
 ```
+
+Plugin changes must keep the Claude Code and Codex manifests on the same version, preserve the four public Skill names, and contain no personal account, absolute home-directory path, OAuth token, broker message body, or real holding fixture.

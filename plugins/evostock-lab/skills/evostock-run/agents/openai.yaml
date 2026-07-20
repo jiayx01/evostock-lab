@@ -1,0 +1,4 @@
+interface:
+  display_name: "EvoStock Run"
+  short_description: "Run a gated automated portfolio review safely"
+  default_prompt: "Use $evostock-run to execute the due EvoStock automation workflow."

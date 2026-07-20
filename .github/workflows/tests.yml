@@ -17,4 +17,5 @@ jobs:
           python-version: "3.14"
           cache: pip
       - run: pip install -r requirements.txt
+      - run: python scripts/validate_distribution.py
       - run: python -m unittest discover -s tests -v

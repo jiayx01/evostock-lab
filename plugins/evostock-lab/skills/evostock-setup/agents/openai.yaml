@@ -1,0 +1,4 @@
+interface:
+  display_name: "EvoStock Setup"
+  short_description: "Deploy Gmail-backed portfolio automation safely"
+  default_prompt: "Use $evostock-setup to verify Gmail and deploy my EvoStock schedules."

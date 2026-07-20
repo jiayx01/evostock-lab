@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "evostock-lab",
+  "version": "0.2.0",
+  "description": "Gmail-backed, scheduled portfolio research with auditable memory and gated rule evolution.",
+  "author": {
+    "name": "jiayx01"
+  },
+  "homepage": "https://github.com/jiayx01/evostock-lab",
+  "repository": "https://github.com/jiayx01/evostock-lab",
+  "license": "MIT",
+  "keywords": [
+    "portfolio",
+    "gmail",
+    "automation",
+    "decision-memory",
+    "stock-research"
+  ],
+  "skills": "./skills/"
+}
