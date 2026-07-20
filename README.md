@@ -1,187 +1,195 @@
+<div align="center">
+
 # EvoStock Lab
 
-> 一个会从历史决策中校准自己的股票研究闭环：记录判断，追踪结果，识别错误，让有效规则经过验证后晋级。
-
-> A Gmail-backed portfolio automation loop for Claude Code and Codex: reconstruct verified holdings, run scheduled reviews, measure every decision, and promote rules only after evidence.
+**A stock research loop that grades its own past calls — and refuses to promote a rule until the evidence survives a gate.**
 
 [![Tests](https://github.com/jiayx01/evostock-lab/actions/workflows/tests.yml/badge.svg)](https://github.com/jiayx01/evostock-lab/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python 3.14](https://img.shields.io/badge/Python-3.14-blue.svg)](https://www.python.org/)
 
-EvoStock Lab 是一套面向低频、集中持仓场景的开源股票研究与自动化框架。它不要求用户每天手工输入持仓，而是从已授权 Gmail 中核验券商成交，以只追加账本重建仓位，再把事实、建议、后续成交和结果窗口组成一条可重放的证据链。使用次数越多，系统拥有的真实反馈越多，候选池、风控门禁和选股规则就越能基于证据持续进化。
+English · [简体中文](README.zh-CN.md)
 
-它不是价格预测器，不会自动下单，也不会因为一天涨跌就修改策略。
+</div>
 
-## 安装为 Claude Code / Codex 插件
+---
 
-插件是自动化控制面：负责 Gmail 身份核验、券商模板初始化、定时任务部署、运行诊断和规则晋级。行情计算、账本重建和结果评估仍由仓库中的确定性 Python 脚本完成。
+Most "AI investing" tools give you an opinion and forget it. EvoStock Lab keeps the receipt.
 
-### Codex
+Every research pass writes an immutable decision record: the facts visible at the time, the reasoning, and the conditional action. The system then scores that decision at fixed windows — 1 hour, close, 1/5/20 trading days — against three baselines: what you actually did, what holding unchanged would have returned, and what the advice alone would have returned. Lessons accumulate in a quarantine area. A lesson only becomes a rule that can constrain future decisions after it clears an explicit gate, and after you approve it.
+
+It runs as a plugin for **Claude Code** and **Codex**, reconstructs holdings from verified broker emails, and never places an order.
+
+### What it is, and what it is not
+
+| It is | It is not |
+| --- | --- |
+| An append-only ledger of decisions and their measured outcomes | A price predictor or signal service |
+| A scheduled research assistant with multi-role cross-review | An auto-trading bot — it has no broker write path |
+| A governance layer that gates which lessons may change behaviour | A model that silently fine-tunes on your P&L |
+| A deterministic pipeline you can replay from source events | A backtester for strategy discovery |
+
+If a rule change cannot show ≥20 independent signals across multiple market regimes, a post-cost risk-adjusted improvement, and no worsening of max drawdown, it stays a candidate.
+
+## Try it in 60 seconds
+
+No account, no API key, no network, no configuration. `--demo` runs the full analysis pipeline against a synthetic portfolio with deterministic offline prices:
 
 ```bash
-codex plugin marketplace add jiayx01/evostock-lab
-codex plugin add evostock-lab@evostock
+git clone https://github.com/jiayx01/evostock-lab.git
+cd evostock-lab
+python3.14 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+python analyze_portfolio.py --demo
 ```
 
-在 ChatGPT 桌面端 Codex 新建任务后运行：
+The prices are generated locally from a fixed seed through a single market factor and per-ticker betas, so relative strength, breadth and VIX stay internally consistent — and every machine produces byte-identical output. They are not market data.
 
-```text
-$evostock-setup
+The brief it prints covers the market regime and its evidence, a holdings fact table with a drafted action per position, drawdown and tail-risk metrics, a scored discovery queue, and the fact inputs handed to each review role:
+
+```
+## 2. 持仓事实表   (Holdings fact table)
+
+|Ticker|价格|数据截止|账户占比(事实)|浮盈亏|20日|相对SPY20日|RSI|状态|动作底稿|
+|---|---|---|---|---|---|---|---|---|---|
+|MSFT|$423.86|2026-07-17|41.9%|10.8%|0.6%|-2.1%|53.3|趋势中性|继续持有|
+|NVDA|$141.72|2026-07-17|14.0%|19.7%|2.1%|-0.7%|52.2|趋势中性|继续持有|
+|AVGO|$230.44|2026-07-17|15.2%|36.4%|-1.7%|-4.4%|44.8|趋势中性|继续持有|
+|GOOGL|$175.63|2026-07-17|28.9%|15.5%|-1.0%|-3.8%|46.3|趋势转弱/需复核|观望但提高警戒|
 ```
 
-### Claude Code
+Note the last row: GOOGL is drafted as *raise alertness* because it broke its 200-day average and lagged SPY over 60 days — not because of its weight. MSFT sits at 41.9% against a 35% ceiling and is still drafted as *hold*, because in this system position size is a recorded fact, never an action trigger on its own.
+
+> **Briefs are currently written in Chinese.** The pipeline, CLI and configuration are language-neutral; only the generated prose is not. English report output is the top open item — see [Roadmap](#roadmap).
+
+## Install as a Claude Code / Codex plugin
+
+The plugin is the automation control plane: Gmail identity verification, broker template setup, scheduled task deployment, run diagnostics and rule promotion. Price math, ledger rebuilds and outcome scoring stay in the deterministic Python in this repo.
+
+**Claude Code**
 
 ```bash
 claude plugin marketplace add jiayx01/evostock-lab
 claude plugin install evostock-lab@evostock
 ```
 
-在 Claude Code Desktop 新会话中运行：
+Then in a new Claude Code Desktop session: `/evostock-lab:evostock-setup`
 
-```text
-/evostock-lab:evostock-setup
-```
-
-首次 Setup 需要用户完成一次 Gmail OAuth、确认目标邮箱和券商邮件模板，并批准即将创建的本地定时任务。插件不会保存 OAuth Token，也不会把手工输入持仓当作生产账本。正式来源顺序为：已核验 Gmail 成交或邮件证据锚点、确定性派生持仓、独立且标记待确认的分析 overlay。
-
-部署完成后，Codex 后台任务调用 `$evostock-run`，Claude Code 后台任务调用 `/evostock-lab:evostock-run`；日常控制入口是：
-
-| Skill | 用途 |
-|---|---|
-| `evostock-setup` | 首次部署、Gmail/券商核验、创建定时任务 |
-| `evostock-run` | 供盘中、每日、收盘、周/月后台任务执行 |
-| `evostock-status` | 检查账号、账本、任务、隔离事件和暂停/恢复 |
-| `evostock-review-rules` | 审阅候选经验，满足证据门禁后再由用户批准 |
-
-Codex 使用桌面端 Scheduled Tasks，Claude Code 使用 Desktop Local Scheduled Tasks。两者都要求电脑开机且桌面应用运行；同一数据目录只能选择一个活动执行端，另一端可以安装插件但不得同时部署任务。
-
-```text
-Gmail OAuth -> 券商模板确认 -> 全量成交账本 -> 持仓重建
-            -> 定时复盘 -> 决策/结果留档 -> 候选经验 -> 用户批准规则
-```
-
-## 为什么它会越用越聪明
-
-这里的“自进化”不是偷偷微调模型，而是一个有门禁的经验学习过程：
-
-1. 每次研究结论都有唯一 `decision_id`，当时可见的事实和建议只追加、不回写。
-2. 系统按 1 小时、收盘、1/5/20 个交易日结算结果，并区分真实成交、原样持有和建议反事实。
-3. 日复盘只记录错误类型，避免用一次盈亏追涨杀跌地改规则。
-4. 候选经验先进入待验证区，不会直接影响下一次盘中判断。
-5. 规则至少需要 20 个独立信号、覆盖多个市场环境，并通过时间顺序留出验证。
-6. 只有交易成本后风险调整结果改善、且最大回撤不恶化，候选规则才允许晋级。
-
-![图 1：EvoStock Lab 可审计的决策与学习闭环](assets/evostock-learning-loop.svg)
-
-*图 1｜系统只把通过门禁的可信事实转成条件式建议，用户始终保留最终决定权；后续操作与结果经过固定窗口评估和时间顺序验证，只有已批准规则才能反馈到下一次研究。*
-
-### 持久化记忆如何工作
-
-持久化记忆不是一段不断变长的自然语言摘要。不可变事实、决策 episode 和结果事件是权威记录；当前持仓、结果矩阵和相似案例索引都可由事件重建。候选经验只能提供上下文，只有已批准规则可以约束生产决策。完整边界见 [`portfolio_memory_strategy.md`](portfolio_memory_strategy.md)。
-
-![图 2：EvoStock Lab 持久化记忆如何参与下一次判断](assets/evostock-memory-architecture.svg)
-
-*图 2｜每次判断及其后续结果组成可检索案例；当前事实始终优先，历史案例只提供上下文，候选经验必须经过样本、成本和回撤门禁并由用户确认，才会成为可约束动作的规则。*
-
-## 核心能力
-
-- **可重放持仓**：只接受已核验的成交事件，以只追加账本重建仓位。
-- **原子证据快照**：邮件索引、成交、隔离区、同步水位、持仓和审计一次提交，避免半成功状态。
-- **持续候选池**：候选经过 `研究队列 -> 持续观察 -> 接近触发 -> 开仓候选/待确认`，不把一次技术排名冒充买入建议。
-- **市场热度上下文**：覆盖 SPY、QQQ、IWM、半导体与软件 ETF、VIX，并用 RSP/SPY 和 HYG/IEF 观察广度与信用风险偏好。
-- **多角色交叉审阅**：提示词定义事实核验、SEC、基本面、估值预期和反方风控五个只读角色；环境支持 agent 时可并行运行。
-- **无未来数据复盘**：所有结果计算都要求显式 `as_of`，行情观察时间与采集时间分开。
-- **默认失败关闭**：身份、分页、哈希、候选状态或关键行情完整性失败时，不产生新的方向性建议。
-- **隐私隔离**：插件默认把邮箱、持仓、券商事件、截图和报告写入 `~/.evostock-lab/data`；直接运行源码时可使用被 Git 忽略的 `data/`。
-
-## 分析引擎快速开始
-
-要求 Python 3.14。行情下载需要网络连接。
+**Codex**
 
 ```bash
-git clone https://github.com/jiayx01/evostock-lab.git
-cd evostock-lab
-
-python3.14 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-python bootstrap_local_data.py
-python analyze_portfolio.py \
-  --holdings examples/holdings.example.csv \
-  --skip-commit-verify \
-  --skip-snapshot-log
+codex plugin marketplace add jiayx01/evostock-lab
+codex plugin add evostock-lab@evostock
 ```
 
-演示命令使用匿名样例持仓，只验证分析链路，不代表推荐任何证券。报告会写入 `data/reports/`。
+Then in a new Codex task: `$evostock-setup`
 
-运行测试：
+| Skill | Purpose |
+| --- | --- |
+| `evostock-setup` | First deployment: Gmail and broker verification, scheduled task creation |
+| `evostock-run` | Executed by intraday, daily, post-close and weekly/monthly background tasks |
+| `evostock-status` | Inspect account, ledger, tasks, quarantined events; pause and resume |
+| `evostock-review-rules` | Review candidate lessons; promote only after the evidence gate and your approval |
 
-```bash
-python -m unittest discover -s tests -v
-```
+First setup requires one Gmail OAuth round trip, confirmation of the target mailbox and broker email templates, and your approval of the local scheduled tasks it is about to create. **The repo stores no OAuth token, cookie or API key**, and never treats hand-typed holdings as a production ledger. Source precedence is: verified Gmail fills → deterministically derived positions → an analysis overlay, kept separate and marked unconfirmed.
 
-## 接入自己的数据
+Codex uses desktop Scheduled Tasks, Claude Code uses Desktop Local Scheduled Tasks. Both need the machine awake and the desktop app running. One data directory may have only one active execution side; the other may install the plugin but must not deploy tasks.
 
-`bootstrap_local_data.py` 只创建缺失文件，绝不覆盖已有内容。默认私有目录是 `data/`；也可把它放到仓库外：
+## How the loop works
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/figure-decision-loop.en-dark.svg">
+  <img alt="Verified facts pass an integrity gate into cross-review, which produces conditional advice for the user to decide on. Outcomes are scored on fixed windows, stored as episodes, temporally validated, and only approved rules feed back into research." src="assets/figure-decision-loop.en-light.svg">
+</picture>
+
+Two properties do the work here. **Fail closed:** if identity, pagination, hashing, candidate state or critical price integrity fails, the system stops producing new directional advice rather than degrading quietly. **Governed feedback:** the only path from a measured outcome back into research runs through temporal validation and your explicit approval — the dashed line is the sole feedback edge in the diagram, and it is guarded.
+
+## How memory works
+
+Persistent memory here is not an ever-growing natural-language summary. It is four layers with different write authority:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/figure-memory-layers.en-dark.svg">
+  <img alt="Four layers: append-only source of truth, deterministically rebuilt derived state, a governance layer where candidate lessons must pass a promotion gate, and a read-only use layer. Candidate lessons are explicitly blocked from constraining actions." src="assets/figure-memory-layers.en-light.svg">
+</picture>
+
+Verified fills, decision episodes and outcome events are authoritative and append-only. Current positions, the outcome matrix and the similar-case index are derived — they can be discarded and rebuilt from L1 at any time, and are never hand-edited. Candidate lessons may supply context but are structurally barred from constraining an action; that is the ⊘ in the diagram. Only approved rules cross into the decision context. Full boundaries: [`portfolio_memory_strategy.md`](portfolio_memory_strategy.md).
+
+## Core capabilities
+
+- **Replayable positions** — only verified fill events are accepted; holdings are rebuilt from an append-only ledger.
+- **Atomic evidence snapshots** — mail index, fills, quarantine, sync watermark, positions and audit commit together, so there is no half-applied state.
+- **Persistent candidate funnel** — candidates move through `research queue → watching → near trigger → open candidate/unconfirmed`. A technical ranking is never passed off as a buy call.
+- **Market context** — SPY, QQQ, IWM, semiconductor and software ETFs, VIX, plus RSP/SPY for breadth and HYG/IEF for credit risk appetite.
+- **Multi-role cross-review** — five read-only roles: fact verification, SEC filings, fundamentals, valuation expectations, and an adversarial risk desk. Run in parallel where the environment supports agents.
+- **No-lookahead scoring** — every outcome calculation requires an explicit `as_of`; observation time and collection time are stored separately.
+- **Missing stays missing** — absent data is recorded as blank or unconfirmed, never backfilled with 0 or read as a safe signal.
+- **Privacy isolation** — the plugin writes mail, positions, broker events, screenshots and reports to `~/.evostock-lab/data`. Running from source uses a git-ignored `data/`.
+
+## Connect your own data
+
+`bootstrap_local_data.py` only creates missing files and never overwrites existing content. The default private directory is `data/`, and it can live outside the repo:
 
 ```bash
 export EVOSTOCK_DATA_DIR=/path/to/private/evostock-data
 python bootstrap_local_data.py
 ```
 
-以下手动命令只适合匿名演示或开发调试，不是生产持仓来源：
+The production path is `evostock-setup`, which onboards in this order:
 
-```bash
-python analyze_portfolio.py --skip-commit-verify
-```
+1. Create the mailbox and broker config from [`examples/broker_email_profile.example.json`](examples/broker_email_profile.example.json).
+2. Verify the current account, senders, subject templates, fill status words, timezone and pagination completeness in the external Gmail connector.
+3. Normalise mail into the batch contract in [`examples/broker_sync_batch.example.json`](examples/broker_sync_batch.example.json).
+4. Commit the first atomic generation with `commit_broker_sync_batch.py` and rebuild positions from verified events.
+5. Record Gmail, broker template, active execution side and platform task IDs as deployment evidence via `scripts/evostockctl.py`.
+6. Run `automation_gate.py` on every platform wake-up. Only after Stage 0 passes does `evostock-run` load Gmail, investment rules, outcome memory and multi-role review.
 
-正式闭环优先运行 `evostock-setup`。它按以下顺序完成接入：
+Mailbox authorisation is handled by the external connector. This repo does not store credentials and does not bypass mailbox identity verification.
 
-1. 以 `examples/broker_email_profile.example.json` 为模板创建邮箱与券商配置。
-2. 在外部 Gmail 连接器中核验当前账号、发件人、主题模板、成交状态词、时区和分页完整性。
-3. 把邮件标准化为 `examples/broker_sync_batch.example.json` 的批次契约。
-4. 用 `commit_broker_sync_batch.py` 一次提交首次原子 generation，并从已核验事件重建持仓。
-5. 用 `scripts/evostockctl.py` 留下 Gmail、券商模板、活动执行端和平台任务 ID 的部署证据。
-6. 每次平台唤醒先运行 `automation_gate.py`；只有 Stage 0 通过后，`evostock-run` 才加载 Gmail、投资规则、结果记忆和多角色审阅。
+Manual invocations like `python analyze_portfolio.py --skip-commit-verify` are for anonymised demos and development only — never a production holdings source.
 
-邮箱授权由外部连接器负责。本仓库不保存 OAuth Token、Cookie 或 API Key，也不会绕过邮箱身份核验。
+## Project layout
 
-## 项目结构
+| Path | Role |
+| --- | --- |
+| `analyze_portfolio.py` | Price, trend, risk, market-heat and candidate-discovery brief (`--demo` for offline runs) |
+| `rebuild_holdings_from_broker_events.py` | Deterministic position rebuild from verified fill events |
+| `commit_broker_sync_batch.py` | Atomic commit of a broker sync generation |
+| `apply_chat_holdings_overlay.py` | Chat-sourced analysis view that never contaminates the broker ledger |
+| `append_decision_event.py` | Append-only decision and mail-delivery state machine |
+| `append_outcome_price_bar.py` | Append-only outcome observations with trading-day validation |
+| `calculate_decision_outcomes.py` | No-lookahead fixed-window outcome calculator |
+| `automation_gate.py` | XNYS Stage 0 hard gate for intraday, daily, post-close and weekly/monthly modes |
+| `scripts/evostockctl.py` | Deployment state machine for Gmail, broker, execution side and platform tasks |
+| `scripts/render_figures.py` | Regenerates the README figures — pure stdlib, no external toolchain |
+| `plugins/evostock-lab/` | Four automation skills and dual manifests shared by Claude Code and Codex |
+| `midnight_portfolio_automation_prompt.md` | Daily review, lesson recall and position judgement contract |
+| `portfolio_memory_strategy.md` | Persistence boundaries across facts, decisions, outcomes, lessons and live rules |
+| `config/candidate_selection_policy.md` | Candidate funnel, scoring, promotion and elimination rules |
+| `experience/` | Version boundary between candidate lessons and live rules |
+| `examples/` | Anonymised inputs and configuration samples |
+| `data/` | Private runtime data; everything but `.gitkeep` is ignored |
 
-| 路径 | 作用 |
-|---|---|
-| `analyze_portfolio.py` | 行情、趋势、风险、市场热度和候选发现底稿 |
-| `rebuild_holdings_from_broker_events.py` | 从已核验成交事件确定性重建持仓 |
-| `commit_broker_sync_batch.py` | 原子提交券商同步 generation |
-| `apply_chat_holdings_overlay.py` | 提交不污染券商账本的聊天持仓分析视图 |
-| `append_decision_event.py` | 只追加决策与邮件发送状态机 |
-| `append_outcome_price_bar.py` | 只追加、带交易日校验的结果行情观察 |
-| `calculate_decision_outcomes.py` | 无未来数据的固定窗口结果计算器 |
-| `automation_gate.py` | 支持盘中、每日、收盘、周/月模式的 XNYS Stage 0 硬门禁 |
-| `scripts/evostockctl.py` | Gmail、券商、执行端和平台任务的部署状态机 |
-| `plugins/evostock-lab/` | Claude Code 与 Codex 共用的四个自动化 Skill 和双 manifest |
-| `midnight_execution_gate.py` | 旧版上海午夜任务的兼容门禁 |
-| `midnight_portfolio_automation_prompt.md` | 每日综合复盘、经验召回与持仓判断契约 |
-| `portfolio_memory_strategy.md` | 事实、决策、结果、经验与生效规则的持久化边界 |
-| `diagrams/*.yaml` | README 两张学术图的权威图源；版本化保存节点、图标、连线与配色语义 |
-| `scripts/render_architecture_figures.py` | 从 YAML 图源生成可编辑 `.drawio` 及 SVG/PNG 学术图 |
-| `config/candidate_selection_policy.md` | 候选漏斗、评分、升级和淘汰规则 |
-| `experience/` | 候选经验与已生效规则的版本边界 |
-| `*_automation_prompt.md` | 日常、盘中和收盘后的 agent 工作流 |
-| `examples/` | 匿名输入与配置示例 |
-| `data/` | 私有运行数据；除 `.gitkeep` 外全部忽略 |
+## Roadmap
 
-## 安全边界
+Contributions welcome on any of these — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-- 不自动下单，不承诺收益，不输出确定性价格预测。
-- 持仓数量、市值、仓位占比和总盈亏是事实记录，不是默认买卖触发器。
-- 缺失数据保留为空或“待确认”，不会填成 0 或安全信号。
-- 时间相邻只能说明成交发生在建议之后，不能证明用户采纳了建议。
-- 新规则必须保留旧版本、样本窗口、验证结果和适用边界。
-- 集中持仓可能带来显著回撤；本项目不替代个人投资判断。
+- [ ] **English report output.** The pipeline is language-neutral; `build_report` is not. Needs a string table and a `--lang` flag.
+- [ ] **Worked promotion example.** `experience/approved_rules.md` states rules without showing a candidate that passed the gate with its sample window and post-cost comparison. The gate deserves a visible instance.
+- [ ] **Wider Python support.** Currently pinned to 3.14 with aggressive dependency pins; a tested floor of 3.11 would remove a real adoption barrier.
+- [ ] **Broker template coverage.** Only the templates you verify locally exist today; contributed and anonymised parser profiles would help.
 
-提交漏洞或敏感信息问题前请阅读 [SECURITY.md](SECURITY.md)。
+## Safety boundaries
+
+- No automatic orders, no return promises, no deterministic price forecasts.
+- Share count, market value, position weight and total P&L are recorded facts, not default buy or sell triggers.
+- Missing data stays blank or unconfirmed. It is never filled with 0 and never read as a safe signal.
+- Temporal adjacency shows only that a fill happened after a piece of advice. It does not prove the advice was adopted.
+- A new rule must retain the prior version, its sample window, its validation result and its scope of applicability.
+- Concentrated positions can produce severe drawdowns. This project does not replace your own investment judgement.
+
+Please read [SECURITY.md](SECURITY.md) before reporting a vulnerability or a data-exposure issue.
 
 ## License
 
