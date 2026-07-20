@@ -4,7 +4,10 @@
 
 “越用越聪明”不等于让模型凭印象记住过去，也不等于根据最近一次盈亏自动改策略。目标是把每次决策变成可重放的 episode：当时看到了什么、为什么这样判断、用户后来做了什么、结果如何、这条经验是否经过足够样本验证。下一次分析先召回相似 episode，再用当前事实重新判断。
 
-![图：持久化记忆如何参与下一次判断](assets/evostock-memory-architecture.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/figure-memory-layers.zh-dark.svg">
+  <img alt="四层记忆结构与各层写入权限" src="assets/figure-memory-layers.zh-light.svg">
+</picture>
 
 *图｜当前事实直接进入决策上下文；历史案例只提供参考，候选经验只有经过时间顺序验证并由用户确认后，才能成为可约束动作的生效规则。*
 
