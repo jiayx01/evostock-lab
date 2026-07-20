@@ -23,12 +23,16 @@ EXPECTED_SKILLS = {
     "evostock-setup",
     "evostock-status",
 }
-FORBIDDEN_TEXT = (
-    "[TODO" + ":",
-    "/Users/" + "jiayexiang",
-    "jyxiang01" + "@gmail.com",
-)
+FORBIDDEN_TEXT = ("[TODO" + ":",)
+# Patterns rather than literals. Listing the specific username or mailbox to be
+# caught would publish it in this file, which is the leak the check exists to
+# prevent. Each pattern is written so it cannot match its own source text.
 FORBIDDEN_PATTERNS = {
+    "absolute home-directory path": re.compile(r"/(?:Users|home)/[a-z][a-z0-9._-]{2,}"),
+    "personal mailbox": re.compile(
+        r"[A-Za-z0-9._%+-]+@(?:gmail|googlemail|outlook|hotmail|live"
+        r"|icloud|qq|163|126|foxmail)\.[a-z]{2,3}\b"
+    ),
     "OAuth access token": re.compile(r"\bya29\.[A-Za-z0-9._-]{20,}"),
     "private key": re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
 }
