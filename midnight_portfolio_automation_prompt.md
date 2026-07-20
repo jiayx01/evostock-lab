@@ -12,11 +12,24 @@
 
 ## 调度与硬门禁
 
-1. 先完整读取本文件、上述四份规则、相关自动化 memory、`data/holdings_commit_manifest.json` 指向的不可变 broker generation、可选 analysis overlay、候选池及状态日志、`data/decision_log.jsonl`、`data/decision_outcomes.csv`、`experience/candidate_rules.md` 和 `experience/approved_rules.md`。
-2. 以 `Asia/Shanghai` 当前时间建立半开窗口 `[00:00, 00:15)`。窗口内归一为 `scheduled_slot=YYYY-MM-DD-0000-CST`；窗口外只记录跳过，不读 Gmail、不改持仓、不分析、不发信。
-3. 将当前时间转换为 `America/New_York`，用正式 XNYS 日历确认该 ET 日期为交易日，且当前时间位于该日官方常规开盘和收盘之间。这样自动覆盖夏令时、冬令时、休市和提前收盘。条件不满足时静默记录跳过。
-4. 从 `data/broker_email_profile.json` 读取 `target_account`，调用 Gmail `get_profile("me")`。结果必须精确等于配置账号，且 `profile_status=CONFIRMED`；否则在搜索邮件、改持仓、输出方向性建议和发信前停止。
-5. 生成唯一 `run_id`，执行 `.venv/bin/python automation_lock.py acquire --name daily-midnight --run-id <run_id> --stale-minutes 75`。`BUSY` 时跳过。同一 `scheduled_slot` 已有 `EMAIL_SENT` 时幂等跳过；有 intent 无结果时按 Sent marker 恢复规则处理。所有出口都必须用同一 run_id 释放锁。
+### Stage 0：前置执行门禁
+
+1. 自动化唤醒后，禁止先读取本文件全文、其他投资提示词、skills、自动化 memory 既有内容、Gmail、持仓、账本、候选池或报告，也不得派生分析 subagent。唯一允许的命令是：
+
+   ```bash
+   .venv/bin/python midnight_execution_gate.py \
+     --append-skip-memory /Users/jiayexiang/.codex/automations/automation-3/memory.md
+   ```
+
+2. 该命令只读取当前时间和本地 `exchange_calendars` XNYS 日历，输出 `scheduled_window_ok`、`xnys_is_session`、`in_regular_session`、`execute_gate` 和 `skip_reason` 等结构化字段。上海启动窗口是半开区间 `[00:00,00:15)`；XNYS 常规交易时段也是开盘时刻包含、收盘时刻不包含。
+3. 只有三个布尔门禁均明确为 `true`，即 `execute_gate=true`，才可进入 Stage 1。任一字段为 `false`、`null`，或命令失败、输出无法解析，都必须失败关闭。
+4. `execute_gate=false` 时，脚本会直接向自动化 memory 追加一条最小跳过记录。确认 `skip_memory_append_status=APPENDED` 后立即静默退出；不得再加载任何完整投资材料，也不得调用 Gmail、获取运行锁、改持仓、补算结果、输出方向性建议、派生分析 subagent 或发信。若追加失败，只报告 Stage 0 技术故障并退出，仍不得进入 Stage 1。
+
+### Stage 1：完整运行材料与后续门禁
+
+1. 仅在 `execute_gate=true` 后，完整读取本文件、上述四份规则、相关自动化 memory、`/Users/jiayexiang/.codex/skills/us-stock-portfolio-loop/SKILL.md` 及其要求的 references、`/Users/jiayexiang/.agents/skills/us-stock-selection/SKILL.md` 及当前任务所需 references、`data/holdings_commit_manifest.json` 指向的不可变 broker generation、可选 analysis overlay、候选池及状态日志、`data/decision_log.jsonl`、`data/decision_outcomes.csv`、`experience/candidate_rules.md` 和 `experience/approved_rules.md`。
+2. 从 `data/broker_email_profile.json` 读取 `target_account`，调用 Gmail `get_profile("me")`。结果必须精确等于配置账号，且 `profile_status=CONFIRMED`；否则在搜索邮件、改持仓、输出方向性建议和发信前停止。
+3. 生成唯一 `run_id`，执行 `.venv/bin/python automation_lock.py acquire --name daily-midnight --run-id <run_id> --stale-minutes 75`。`BUSY` 时跳过。同一 `scheduled_slot` 已有 `EMAIL_SENT` 时幂等跳过；有 intent 无结果时按 Sent marker 恢复规则处理。所有出口都必须用同一 run_id 释放锁。
 
 ## 先学习，再判断
 
@@ -55,4 +68,4 @@
 3. 周/月复盘、候选状态变化和 skill proposal 摘要并入同一封邮件，不另发重复邮件。只有投递恢复流程允许对同一 decision 继续处理，但必须复用唯一 idempotency marker，禁止重复成功发送。
 4. 首次成功追加 `EMAIL_SENT` 后，以实际送达时点向上对齐到下一分钟，等待该一分钟完整结束，再为 SPY 和每只持仓追加这一根完成的 `INTRADAY` bar。`bar_at` 是一分钟区间起点，`collected_at` 必须不早于 `bar_at+1分钟`。结果计算器只接受这根精确送达后 bar 作为可执行参考；缺失时保持 `PENDING_DATA`，不得回退到送达前分析参考价，也不得进入规则晋级样本。
 5. 结尾固定包含：`集中持仓可能带来显著回撤，本结论不承诺收益，不替代个人投资判断。最终决定权在用户。`
-6. 无论成功、失败或门禁停止，更新自动化 memory 的运行时间、结果、已处理游标和待确认项，并释放 `daily-midnight` 锁。不得自动下单。
+6. 进入 Stage 1 后，无论成功、失败或门禁停止，都更新自动化 memory 的运行时间、结果、已处理游标和待确认项，并释放已获取的 `daily-midnight` 锁。Stage 0 跳过由门禁脚本单独追加最小记录，不获取锁。不得自动下单。

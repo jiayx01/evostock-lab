@@ -92,7 +92,7 @@ python analyze_portfolio.py --skip-commit-verify
 2. 在外部 Gmail 连接器中核验当前账号、发件人、主题模板、成交状态词、时区和分页完整性。
 3. 把邮件标准化为 `examples/broker_sync_batch.example.json` 的批次契约。
 4. 用 `rebuild_holdings_from_broker_events.py` 建立首次可验证持仓，再用 `commit_broker_sync_batch.py --migrate-existing` 启用原子 generation。
-5. 用 `midnight_portfolio_automation_prompt.md` 每日统一执行结果补算、经验召回、持仓研究和决策留痕；其他提示词提供盘中细节与收盘复盘口径。
+5. 每次午夜唤醒先运行 `midnight_execution_gate.py`；只有 Stage 0 通过后，才用 `midnight_portfolio_automation_prompt.md` 统一执行结果补算、经验召回、持仓研究和决策留痕。其他提示词提供盘中细节与收盘复盘口径。
 
 邮箱授权由外部连接器负责。本仓库不保存 OAuth Token、Cookie 或 API Key，也不会绕过邮箱身份核验。
 
@@ -107,6 +107,7 @@ python analyze_portfolio.py --skip-commit-verify
 | `append_decision_event.py` | 只追加决策与邮件发送状态机 |
 | `append_outcome_price_bar.py` | 只追加、带交易日校验的结果行情观察 |
 | `calculate_decision_outcomes.py` | 无未来数据的固定窗口结果计算器 |
+| `midnight_execution_gate.py` | 不加载投资上下文的午夜时间与 XNYS Stage 0 硬门禁 |
 | `midnight_portfolio_automation_prompt.md` | 每日午夜一次完成结果补算、经验召回与持仓判断 |
 | `portfolio_memory_strategy.md` | 事实、决策、结果、经验与生效规则的持久化边界 |
 | `diagrams/*.yaml` | README 两张学术图的权威图源；版本化保存节点、图标、连线与配色语义 |
