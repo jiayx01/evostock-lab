@@ -6,7 +6,7 @@
 
 [![Tests](https://github.com/jiayx01/evostock-lab/actions/workflows/tests.yml/badge.svg)](https://github.com/jiayx01/evostock-lab/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Python 3.14](https://img.shields.io/badge/Python-3.14-blue.svg)](https://www.python.org/)
+[![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://www.python.org/)
 
 English · [简体中文](README.zh-CN.md)
 
@@ -33,15 +33,15 @@ If a rule change cannot show ≥20 independent signals across multiple market re
 
 ## Try it in 60 seconds
 
-No account, no API key, no network, no configuration. `--demo` runs the full analysis pipeline against a synthetic portfolio with deterministic offline prices:
+No account, no API key, no network, no configuration. `--demo` runs the full analysis pipeline against a synthetic portfolio with deterministic offline prices. Python 3.12, 3.13 and 3.14 are CI-tested:
 
 ```bash
 git clone https://github.com/jiayx01/evostock-lab.git
 cd evostock-lab
-python3.14 -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-python analyze_portfolio.py --demo
+python analyze_portfolio.py --demo --lang en
 ```
 
 The prices are generated locally from a fixed seed through a single market factor and per-ticker betas, so relative strength, breadth and VIX stay internally consistent — and every machine produces byte-identical output. They are not market data.
@@ -49,19 +49,19 @@ The prices are generated locally from a fixed seed through a single market facto
 The brief it prints covers the market regime and its evidence, a holdings fact table with a drafted action per position, drawdown and tail-risk metrics, a scored discovery queue, and the fact inputs handed to each review role:
 
 ```
-## 2. 持仓事实表   (Holdings fact table)
+## 2. Holdings Fact Table
 
-|Ticker|价格|数据截止|账户占比(事实)|浮盈亏|20日|相对SPY20日|RSI|状态|动作底稿|
+|Ticker|Price|Data as of|Weight (fact)|Unrealised P&L|20d|vs SPY 20d|RSI|State|Drafted action|
 |---|---|---|---|---|---|---|---|---|---|
-|MSFT|$423.86|2026-07-17|41.9%|10.8%|0.6%|-2.1%|53.3|趋势中性|继续持有|
-|NVDA|$141.72|2026-07-17|14.0%|19.7%|2.1%|-0.7%|52.2|趋势中性|继续持有|
-|AVGO|$230.44|2026-07-17|15.2%|36.4%|-1.7%|-4.4%|44.8|趋势中性|继续持有|
-|GOOGL|$175.63|2026-07-17|28.9%|15.5%|-1.0%|-3.8%|46.3|趋势转弱/需复核|观望但提高警戒|
+|MSFT|$423.86|2026-07-17|41.9%|10.8%|0.6%|-2.1%|53.3|Neutral trend|Hold|
+|NVDA|$141.72|2026-07-17|14.0%|19.7%|2.1%|-0.7%|52.2|Neutral trend|Hold|
+|AVGO|$230.44|2026-07-17|15.2%|36.4%|-1.7%|-4.4%|44.8|Neutral trend|Hold|
+|GOOGL|$175.63|2026-07-17|28.9%|15.5%|-1.0%|-3.8%|46.3|Weakening / review|Watch with raised alert|
 ```
 
-Note the last row: GOOGL is drafted as *raise alertness* because it broke its 200-day average and lagged SPY over 60 days — not because of its weight. MSFT sits at 41.9% against a 35% ceiling and is still drafted as *hold*, because in this system position size is a recorded fact, never an action trigger on its own.
+Note the last row: GOOGL is drafted as *watch with raised alert* because it broke its 200-day average and lagged SPY over 60 days — not because of its weight. MSFT sits at 41.9% against a 35% ceiling and is still drafted as *hold*, because in this system position size is a recorded fact, never an action trigger on its own.
 
-> **Briefs are currently written in Chinese.** The pipeline, CLI and configuration are language-neutral; only the generated prose is not. English report output is the top open item — see [Roadmap](#roadmap).
+The brief renders in English (`--lang en`) or Chinese (default). The scheduled-automation prompt contracts are still Chinese-first — see [Roadmap](#roadmap).
 
 ## Install as a Claude Code / Codex plugin
 
@@ -153,7 +153,7 @@ Manual invocations like `python analyze_portfolio.py --skip-commit-verify` are f
 
 | Path | Role |
 | --- | --- |
-| `analyze_portfolio.py` | Price, trend, risk, market-heat and candidate-discovery brief (`--demo` for offline runs) |
+| `analyze_portfolio.py` | Price, trend, risk, market-heat and candidate-discovery brief (`--demo` offline, `--lang en\|zh`) |
 | `rebuild_holdings_from_broker_events.py` | Deterministic position rebuild from verified fill events |
 | `commit_broker_sync_batch.py` | Atomic commit of a broker sync generation |
 | `apply_chat_holdings_overlay.py` | Chat-sourced analysis view that never contaminates the broker ledger |
@@ -175,9 +175,8 @@ Manual invocations like `python analyze_portfolio.py --skip-commit-verify` are f
 
 Contributions welcome on any of these — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-- [ ] **English report output.** The pipeline is language-neutral; `build_report` is not. Needs a string table and a `--lang` flag.
 - [ ] **Worked promotion example.** `experience/approved_rules.md` states rules without showing a candidate that passed the gate with its sample window and post-cost comparison. The gate deserves a visible instance.
-- [ ] **Wider Python support.** Currently pinned to 3.14 with aggressive dependency pins; a tested floor of 3.11 would remove a real adoption barrier.
+- [ ] **English automation prompts.** The analysis brief now renders in English (`--lang en`), but the scheduled-run prompt contracts (`*_automation_prompt.md`) are still Chinese-first.
 - [ ] **Broker template coverage.** Only the templates you verify locally exist today; contributed and anonymised parser profiles would help.
 
 ## Safety boundaries

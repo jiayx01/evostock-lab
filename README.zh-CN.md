@@ -6,7 +6,7 @@
 
 [![Tests](https://github.com/jiayx01/evostock-lab/actions/workflows/tests.yml/badge.svg)](https://github.com/jiayx01/evostock-lab/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Python 3.14](https://img.shields.io/badge/Python-3.14-blue.svg)](https://www.python.org/)
+[![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://www.python.org/)
 
 [English](README.md) · 简体中文
 
@@ -33,16 +33,18 @@
 
 ## 60 秒试一下
 
-不需要账号、API Key、网络或任何配置。`--demo` 用一个合成组合和确定性离线行情，跑完整条分析管线：
+不需要账号、API Key、网络或任何配置。`--demo` 用一个合成组合和确定性离线行情，跑完整条分析管线。Python 3.12 / 3.13 / 3.14 均经 CI 实测：
 
 ```bash
 git clone https://github.com/jiayx01/evostock-lab.git
 cd evostock-lab
-python3.14 -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 python analyze_portfolio.py --demo
 ```
+
+需要英文版底稿时加 `--lang en`。
 
 行情由固定随机种子在本地生成，走的是「单一市场因子 + 每只标的自己的 beta」，所以相对强弱、市场广度和 VIX 之间保持内部一致，而且任何机器跑出来的结果逐字节相同。它们不是真实行情。
 
@@ -151,7 +153,7 @@ python bootstrap_local_data.py
 
 | 路径 | 作用 |
 | --- | --- |
-| `analyze_portfolio.py` | 行情、趋势、风险、市场热度和候选发现底稿（`--demo` 为离线模式） |
+| `analyze_portfolio.py` | 行情、趋势、风险、市场热度和候选发现底稿（`--demo` 离线，`--lang en\|zh`） |
 | `rebuild_holdings_from_broker_events.py` | 从已核验成交事件确定性重建持仓 |
 | `commit_broker_sync_batch.py` | 原子提交券商同步 generation |
 | `apply_chat_holdings_overlay.py` | 提交不污染券商账本的聊天持仓分析视图 |
@@ -173,9 +175,8 @@ python bootstrap_local_data.py
 
 以下每一项都欢迎贡献，参见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-- [ ] **英文报告输出。** 管线本身与语言无关，`build_report` 不是。需要抽出字符串表并加 `--lang` 参数。
 - [ ] **一个走完晋级流程的实例。** `experience/approved_rules.md` 现在只列规则，没有展示某条候选是怎么带着样本窗口和成本后对比通过门禁的。门禁值得有一个看得见的实例。
-- [ ] **放宽 Python 版本。** 目前锁在 3.14 且依赖版本很激进；把下限测到 3.11 能去掉一个真实的采用门槛。
+- [ ] **自动化提示词的英文版。** 分析底稿已支持 `--lang en`，但定时任务的提示词契约（`*_automation_prompt.md`）仍以中文为主。
 - [ ] **券商模板覆盖。** 现在只有你本地核验过的模板；欢迎贡献匿名化的解析配置。
 
 ## 安全边界
