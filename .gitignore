@@ -52,3 +52,6 @@ watchlist_current.csv
 
 # Curated documentation artwork is safe to publish.
 !assets/*.png
+
+# Local launch/marketing drafts are not part of the distribution.
+promo/

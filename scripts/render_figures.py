@@ -781,6 +781,104 @@ def figure_memory(lang, theme_name):
 
 
 # --------------------------------------------------------------------------
+# social preview card (1280x640, English, light only)
+# --------------------------------------------------------------------------
+
+
+def figure_social() -> str:
+    """The GitHub social-preview card: repo settings accept a 1280x640 image.
+
+    Rasterise with any browser, e.g.
+    ``chrome --headless --screenshot=social-preview.png --window-size=2560,1280``
+    over an HTML page embedding the SVG at 200%.
+    """
+    theme = THEMES["light"]
+    W, H = 1280, 640
+    body = []
+
+    body.append(text(84, 172, "EvoStock Lab", fill=theme["ink"], size=66, weight=700))
+    for i, line in enumerate(
+        (
+            "A stock research loop that grades its own past calls —",
+            "and gates every rule behind evidence.",
+        )
+    ):
+        body.append(text(84, 226 + i * 38, line, fill=theme["muted"], size=26))
+
+    steps = ("Verified facts", "Integrity gate", "Cross-review", "Conditional advice", "You decide")
+    CW, CH, GAP = 204, 76, 18
+    y0 = 356
+    x0 = (W - (CW * len(steps) + GAP * (len(steps) - 1))) / 2
+    centers = []
+    for i, label in enumerate(steps):
+        x = x0 + i * (CW + GAP)
+        centers.append(x + CW / 2)
+        body.append(
+            rect(x, y0, CW, CH, fill=theme["card"], stroke=theme["card_stroke"], width=1.2, radius=11)
+        )
+        body.append(rect(x + CW / 2 - 17, y0 + 12, 34, 24, fill=theme["accent"], radius=6))
+        body.append(
+            text(
+                x + CW / 2,
+                y0 + 29,
+                f"0{i + 1}",
+                fill=theme["chip_text"],
+                size=13.5,
+                weight=700,
+                anchor="middle",
+            )
+        )
+        body.append(
+            text(x + CW / 2, y0 + 60, label, fill=theme["ink"], size=17.5, weight=600, anchor="middle")
+        )
+        if i:
+            body.append(
+                connector([(x - GAP + 3, y0 + CH / 2), (x - 4, y0 + CH / 2)], stroke=theme["line"])
+            )
+
+    fb_y = 486
+    body.append(
+        connector(
+            [
+                (centers[4], y0 + CH + 4),
+                (centers[4], fb_y),
+                (centers[2], fb_y),
+                (centers[2], y0 + CH + 6),
+            ],
+            stroke=theme["accent"],
+            dash="6 5",
+            marker="accent",
+        )
+    )
+    body.append(
+        text(
+            (centers[2] + centers[4]) / 2,
+            fb_y + 26,
+            "outcomes scored at fixed windows — only approved rules feed back",
+            fill=theme["accent"],
+            size=16,
+            weight=600,
+            anchor="middle",
+        )
+    )
+
+    body.append(
+        text(
+            84,
+            600,
+            "Claude Code / Codex plugin   ·   60-second offline demo   ·   MIT",
+            fill=theme["muted"],
+            size=18,
+        )
+    )
+    body.append(
+        text(W - 84, 600, "github.com/jiayx01/evostock-lab", fill=theme["faint"], size=16, anchor="end")
+    )
+
+    return svg_document(W, H, theme, "en", body)
+
+
+# --------------------------------------------------------------------------
 
 FIGURES = {
     "figure-decision-loop": figure_loop,
@@ -797,6 +895,9 @@ def main() -> None:
                 path = ASSETS / f"{stem}.{lang}-{theme}.svg"
                 path.write_text(builder(lang, theme), encoding="utf-8")
                 written.append(f"{path.relative_to(ROOT)}  {path.stat().st_size / 1024:.1f} KB")
+    social = ASSETS / "social-preview.svg"
+    social.write_text(figure_social(), encoding="utf-8")
+    written.append(f"{social.relative_to(ROOT)}  {social.stat().st_size / 1024:.1f} KB")
     print("\n".join(written))
 
 
