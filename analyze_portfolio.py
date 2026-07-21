@@ -21,6 +21,7 @@ from ta.trend import MACD
 from ta.volatility import AverageTrueRange
 
 from evostock_paths import config_path, data_path
+from report_i18n import translate_report
 from rebuild_holdings_from_broker_events import (
     ReconciliationError,
     resolve_committed_path,
@@ -1258,6 +1259,12 @@ def main() -> None:
             "offline prices. No network, no private data, no configuration."
         ),
     )
+    parser.add_argument(
+        "--lang",
+        choices=("zh", "en"),
+        default="zh",
+        help="Language of the generated brief (default: zh).",
+    )
     args = parser.parse_args()
 
     if args.demo:
@@ -1390,6 +1397,10 @@ def main() -> None:
     report = build_report(
         holdings, watchlist, opening_universe, candidate_watchlist, metrics, args
     )
+    if args.lang == "en":
+        # Internal strings stay Chinese (the ledger and tests key on them);
+        # the finished brief is rendered through the reviewed phrase table.
+        report = translate_report(report)
     if args.demo:
         report = DEMO_BANNER + report
     stamp = datetime.now().strftime("%Y%m%d_%H%M")
